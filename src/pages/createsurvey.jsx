@@ -58,8 +58,7 @@ const SurveyCreation = () => {
   const [weeklyChecked, setWeeklyChecked] = useState(false);
   const [assignRolesChecked, setAssignRolesChecked] = useState(false);
   const [setResponseLimitChecked, setSetResponseLimitChecked] = useState(false);
-const [setEditResponseCountChecked, setSetEditResponseCountChecked] = useState(false);
-
+  const [setEditResponseCountChecked, setSetEditResponseCountChecked] = useState(false);
 
   const handleExpand = (index) => {
     setQuestions((prev) => prev.map((q, i) => (i === index ? { ...q, expanded: true } : q)));
@@ -168,7 +167,20 @@ const [setEditResponseCountChecked, setSetEditResponseCountChecked] = useState(f
                   <IconButton onClick={() => handleDeleteQuestion(qIndex)} style={{ color: "#6a4bbc" }}><Delete /></IconButton>
                 </div>
               </div>
-              <TextField placeholder="Enter the question" fullWidth variant="outlined" size="small" style={{ marginTop: "10px" }} onClick={() => handleExpand(qIndex)} />
+              <TextField 
+                placeholder="Enter the question" 
+                fullWidth 
+                variant="outlined" 
+                size="small" 
+                style={{ marginTop: "10px" }} 
+                value={question.text} 
+                onChange={(e) => {
+                  const newQuestions = [...questions];
+                  newQuestions[qIndex].text = e.target.value;
+                  setQuestions(newQuestions);
+                }}
+                onClick={() => handleExpand(qIndex)} 
+              />
               {question.expanded && (
                 <div style={{ marginTop: "20px" }}>
                   <strong>Predefined Options</strong>
@@ -250,128 +262,109 @@ const [setEditResponseCountChecked, setSetEditResponseCountChecked] = useState(f
       </Dialog>
 
       {/* Permissions Dialog */}
+      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth>
+        <DialogTitle style={{ fontWeight: "bold", backgroundColor: "white", padding: "15px" }}>
+          Permissions
+        </DialogTitle>
+        <DialogContent style={{ display: "flex", flexDirection: "column", width: "50rem", height: "35rem" }}>
+          <div style={{ backgroundColor: "#d3d3d3", padding: "10px", borderRadius: "5px" }}>
+            <FormControlLabel 
+              control={<Checkbox checked={dateTimeAllocationChecked} onChange={(e) => setDateTimeAllocationChecked(e.target.checked)} />} 
+              label="Date, Start and end time allocation" 
+            />
+            {dateTimeAllocationChecked && (
+              <div style={{ display: "flex", gap: "20px", marginLeft: "20px" }}>
+                <TextField label="Start date & Time" variant="outlined" fullWidth placeholder="Placeholder" />
+                <TextField label="End date & Time (optional)" variant="outlined" fullWidth placeholder="Placeholder" />
+              </div>
+            )}
+          </div>
+          <hr style={{ width: "100%", border: "1px solid #ccc", margin: "15px 0" }} />
 
-                  <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth>
-                    <DialogTitle style={{ fontWeight: "bold", backgroundColor: "white", padding: "15px" }}>
-                      Permissions
-                    </DialogTitle>
-                    <DialogContent style={{ display: "flex", flexDirection: "column", width: "50rem", height: "35rem" }}>
-                      
-                      <div style={{ backgroundColor: "#d3d3d3", padding: "10px", borderRadius: "5px" }}>
-                        <FormControlLabel 
-                          control={<Checkbox checked={dateTimeAllocationChecked} onChange={(e) => setDateTimeAllocationChecked(e.target.checked)} />} 
-                          label="Date, Start and end time allocation" 
-                        />
-                        {dateTimeAllocationChecked && (
-                          <div style={{ display: "flex", gap: "20px", marginLeft: "20px" }}>
-                            <TextField label="Start date & Time" variant="outlined" fullWidth placeholder="Placeholder" />
-                            <TextField label="End date & Time (optional)" variant="outlined" fullWidth placeholder="Placeholder" />
-                          </div>
-                        )}
-                      </div>
-                      <hr style={{ width: "100%", border: "1px solid #ccc",solid :"#B2BEB5", margin: "15px 0" }} />
+          <div style={{ backgroundColor: "#d3d3d3", padding: "10px", borderRadius: "5px" }}>
+            <FormControlLabel 
+              control={<Checkbox checked={schedulingFrequencyChecked} onChange={(e) => setSchedulingFrequencyChecked(e.target.checked)} />} 
+              label="Scheduling frequencies" 
+            />
+            {schedulingFrequencyChecked && (
+              <div style={{ display: "flex", gap: "10px", marginLeft: "20px", flexWrap: "wrap" }}>
+                <FormControlLabel control={<Checkbox />} label="Daily" />
+                <FormControlLabel control={<Checkbox checked={weeklyChecked} onChange={(e) => setWeeklyChecked(e.target.checked)} />} label="Weekly" />
+                <FormControlLabel control={<Checkbox />} label="Monthly" />
+              </div>
+            )}
+            {schedulingFrequencyChecked && weeklyChecked && (
+              <div style={{ display: "flex", gap: "10px", marginLeft: "20px", flexWrap: "wrap" }}>
+                <FormControlLabel control={<Checkbox />} label="Sunday" />
+                <FormControlLabel control={<Checkbox />} label="Monday" />
+                <FormControlLabel control={<Checkbox />} label="Tuesday" />
+                <FormControlLabel control={<Checkbox />} label="Wednesday" />
+                <FormControlLabel control={<Checkbox />} label="Thursday" />
+                <FormControlLabel control={<Checkbox />} label="Friday" />
+                <FormControlLabel control={<Checkbox />} label="Saturday" />
+              </div>
+            )}
+          </div>
+          <hr style={{ width: "100%", border: "1px solid #ccc", margin: "15px 0" }} />
 
-                      <div style={{ backgroundColor: "#d3d3d3", padding: "10px", borderRadius: "5px" }}>
-                        <FormControlLabel 
-                          control={<Checkbox checked={schedulingFrequencyChecked} onChange={(e) => setSchedulingFrequencyChecked(e.target.checked)} />} 
-                          label="Scheduling frequencies" 
-                        />
-                        {schedulingFrequencyChecked && (
-                          <div style={{ display: "flex", gap: "10px", marginLeft: "20px", flexWrap: "wrap" }}>
-                            <FormControlLabel control={<Checkbox />} label="Daily" />
-                            <FormControlLabel control={<Checkbox checked={weeklyChecked} onChange={(e) => setWeeklyChecked(e.target.checked)} />} label="Weekly" />
-                            <FormControlLabel control={<Checkbox />} label="Monthly" />
-                          </div>
-                        )}
-                        {schedulingFrequencyChecked && weeklyChecked && (
-                          <div style={{ display: "flex", gap: "10px", marginLeft: "20px", flexWrap: "wrap" }}>
-                            <FormControlLabel control={<Checkbox />} label="Sunday" />
-                            <FormControlLabel control={<Checkbox />} label="Monday" />
-                            <FormControlLabel control={<Checkbox />} label="Tuesday" />
-                            <FormControlLabel control={<Checkbox />} label="Wednesday" />
-                            <FormControlLabel control={<Checkbox />} label="Thursday" />
-                            <FormControlLabel control={<Checkbox />} label="Friday" />
-                            <FormControlLabel control={<Checkbox />} label="Saturday" />
-                          </div>
-                        )}
-                      </div>
-                      <hr style={{ width: "100%", border: "1px solid #ccc", margin: "15px 0" }} />
+          <div style={{ backgroundColor: "#d3d3d3", padding: "10px", borderRadius: "5px" }}>
+            <FormControlLabel 
+              control={<Checkbox checked={randomTimingChecked} onChange={(e) => setRandomTimingChecked(e.target.checked)} />} 
+              label="Populate in random timing in a specific duration of time" 
+            />
+            {randomTimingChecked && (
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginLeft: "20px" }}>
+                <TextField label="Time difference (optional)" variant="outlined" fullWidth defaultValue="5 minutes" />
+              </div>
+            )}
+          </div>
+          <hr style={{ width: "100%", border: "1px solid #ccc", margin: "15px 0" }} />
 
-                      <div style={{ backgroundColor: "#d3d3d3", padding: "10px", borderRadius: "5px" }}>
-                        <FormControlLabel 
-                          control={<Checkbox checked={randomTimingChecked} onChange={(e) => setRandomTimingChecked(e.target.checked)} />} 
-                          label="Populate in random timing in a specific duration of time" 
-                        />
-                        {randomTimingChecked && (
-                          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginLeft: "20px" }}>
-                            <TextField label="Time difference (optional)" variant="outlined" fullWidth defaultValue="5 minutes" />
-                          </div>
-                        )}
-                      </div>
-                      <hr style={{ width: "100%", border: "1px solid #ccc", margin: "15px 0" }} />
+          <div style={{ backgroundColor: "#d3d3d3", padding: "10px", borderRadius: "5px" }}>
+            <FormControlLabel control={<Checkbox defaultChecked />} label="Send reminders to the respondents" />
+          </div>
+          <hr style={{ width: "100%", border: "1px solid #ccc", margin: "15px 0" }} />
 
-                      <div style={{ backgroundColor: "#d3d3d3", padding: "10px", borderRadius: "5px" }}>
-                        <FormControlLabel control={<Checkbox defaultChecked />} label="Send reminders to the respondents" />
-                      </div>
-                      <hr style={{ width: "100%", border: "1px solid #ccc", margin: "15px 0" }} />
+          <div style={{ backgroundColor: "#d3d3d3", padding: "10px", borderRadius: "5px" }}>
+            <FormControlLabel 
+              control={<Checkbox checked={assignRolesChecked} onChange={(e) => setAssignRolesChecked(e.target.checked)} />} 
+              label="Assign to roles" 
+            />
+            {assignRolesChecked && (
+              <div style={{ marginLeft: "20px", width: "200px" }}>
+                <Select fullWidth defaultValue="Placeholder">
+                  <MenuItem value="Placeholder">Placeholder</MenuItem>
+                  <MenuItem value="Year">Year</MenuItem>
+                </Select>
+              </div>
+            )}
+          </div>
+          <hr style={{ width: "100%", border: "1px solid #ccc", margin: "15px 0" }} />
 
-                      <div style={{ backgroundColor: "#d3d3d3", padding: "10px", borderRadius: "5px" }}>
-                        <FormControlLabel 
-                          control={<Checkbox checked={assignRolesChecked} onChange={(e) => setAssignRolesChecked(e.target.checked)} />} 
-                          label="Assign to roles" 
-                        />
-                        {assignRolesChecked && (
-                          <div style={{ marginLeft: "20px", width: "200px" }}>
-                            <Select fullWidth defaultValue="Placeholder">
-                              <MenuItem value="Placeholder">Placeholder</MenuItem>
-                              <MenuItem value="Year">Year</MenuItem>
-                            </Select>
-                          </div>
-                        )}
-                      </div>
-                      <hr style={{ width: "100%", border: "1px solid #ccc", margin: "15px 0" }} />
+          <div style={{ backgroundColor: "#d3d3d3", padding: "10px", borderRadius: "5px" }}>
+            <FormControlLabel 
+              control={<Checkbox checked={setResponseLimitChecked} onChange={(e) => setSetResponseLimitChecked(e.target.checked)} />} 
+              label="Set response limit" 
+            />
+            {setResponseLimitChecked && (
+              <div style={{ marginLeft: "20px", width: "200px" }}>
+                <Select fullWidth defaultValue="Placeholder">
+                  <MenuItem value="number">1</MenuItem>
+                  <MenuItem value="number">2</MenuItem>
+                  <MenuItem value="number">3</MenuItem>
+                </Select>
+              </div>
+            )}
+          </div>
+                        <hr style={{ width: "100%", border: "1px solid #ccc", margin: "15px 0" }} />
+                      </DialogContent>
 
-                      <div style={{ backgroundColor: "#d3d3d3", padding: "10px", borderRadius: "5px" }}>
-                        <FormControlLabel 
-                          control={<Checkbox checked={setResponseLimitChecked} onChange={(e) => setSetResponseLimitChecked(e.target.checked)} />} 
-                          label="Set response limit" 
-                        />
-                        {setResponseLimitChecked && (
-                          <div style={{ marginLeft: "20px", width: "200px" }}>
-                            <Select fullWidth defaultValue="Placeholder">
-                              <MenuItem value="number">1</MenuItem>
-                              <MenuItem value="number">2</MenuItem>
-                              <MenuItem value="number">3</MenuItem>
-                            </Select>
-                          </div>
-                        )}
-                      </div>
-                      <hr style={{ width: "100%", border: "1px solid #ccc", margin: "15px 0" }} />
-
-                      <div style={{ backgroundColor: "#d3d3d3", padding: "10px", borderRadius: "5px" }}>
-                        <FormControlLabel 
-                          control={<Checkbox checked={setEditResponseCountChecked} onChange={(e) => setSetEditResponseCountChecked(e.target.checked)} />} 
-                          label="Set edit response count" 
-                        />
-                        {setEditResponseCountChecked && (
-                          <div style={{ marginLeft: "20px", width: "200px" }}>
-                            <Select fullWidth defaultValue="Placeholder">
-                              <MenuItem value="number">1</MenuItem>
-                              <MenuItem value="number">2</MenuItem>
-                              <MenuItem value="number">3</MenuItem>
-                            </Select>
-                          </div>
-                        )}
-                      </div>
-                      <hr style={{ width: "100%", border: "1px solid #ccc", margin: "15px 0" }} />
-                    </DialogContent>
-
-                    <DialogActions style={{ backgroundColor: "white", padding: "15px" }}>
-                      <Button onClick={() => setOpenDialog(false)} style={{ backgroundColor: "#28a745", color: "white", padding: "10px 20px" }}>
-                        Save
-                      </Button>
-                    </DialogActions>
-                  </Dialog>
+                      <DialogActions style={{ backgroundColor: "white", padding: "15px" }}>
+                        <Button onClick={() => setOpenDialog(false)} style={{ backgroundColor: "#28a745", color: "white", padding: "10px 20px" }}>
+                          Save
+                        </Button>
+                      </DialogActions>
+                    </Dialog>
 
 
       {/* Modal for "Copy and paste questions" */}
@@ -471,4 +464,4 @@ const [setEditResponseCountChecked, setSetEditResponseCountChecked] = useState(f
 };
 
 export default SurveyCreation;
-               
+         
