@@ -8,7 +8,6 @@ import {
   MenuItem,
   IconButton,
   Avatar,
-  Switch,
   Checkbox,
   FormControlLabel,
   Dialog,
@@ -38,6 +37,7 @@ const SurveyCreation = () => {
       options: ["Agree", "Disagree", "Strongly disagree"],
       scale: 3,
       expanded: false,
+      showOptions: false,
     },
   ]);
 
@@ -58,7 +58,12 @@ const SurveyCreation = () => {
   const [weeklyChecked, setWeeklyChecked] = useState(false);
   const [assignRolesChecked, setAssignRolesChecked] = useState(false);
   const [setResponseLimitChecked, setSetResponseLimitChecked] = useState(false);
-  const [setEditResponseCountChecked, setSetEditResponseCountChecked] = useState(false);
+
+  // State to track which option is being edited
+  const [editingOption, setEditingOption] = useState({ qIndex: null, oIndex: null });
+
+  // State to track the active page (edit or options)
+  const [activePage, setActivePage] = useState("edit");
 
   const handleExpand = (index) => {
     setQuestions((prev) => prev.map((q, i) => (i === index ? { ...q, expanded: true } : q)));
@@ -88,6 +93,7 @@ const SurveyCreation = () => {
         options: ["Agree", "Disagree", "Strongly disagree"],
         scale: 3,
         expanded: false,
+        showOptions: false,
       },
     ]);
   };
@@ -132,11 +138,49 @@ const SurveyCreation = () => {
         options: choices,
         scale: 3,
         expanded: false,
+        showOptions: false,
       };
     });
     setQuestions((prev) => [...prev, ...parsedQuestions]);
     setModalOpen(false);
     setInputText("");
+  };
+
+  const handleToggleOptions = (index) => {
+    setQuestions((prev) => prev.map((q, i) => (i === index ? { ...q, showOptions: !q.showOptions } : q)));
+  };
+
+  const handleOptionChange = (qIndex, oIndex, value) => {
+    setQuestions((prev) =>
+      prev.map((q, i) =>
+        i === qIndex
+          ? {
+              ...q,
+              options: q.options.map((option, j) => (j === oIndex ? value : option)),
+            }
+          : q
+      )
+    );
+  };
+
+  // Function to handle editing an option
+  const handleEditOption = (qIndex, oIndex) => {
+    setEditingOption({ qIndex, oIndex });
+  };
+
+  // Function to save the edited option
+  const handleSaveEditedOption = (qIndex, oIndex, value) => {
+    setQuestions((prev) =>
+      prev.map((q, i) =>
+        i === qIndex
+          ? {
+              ...q,
+              options: q.options.map((option, j) => (j === oIndex ? value : option)),
+            }
+          : q
+      )
+    );
+    setEditingOption({ qIndex: null, oIndex: null });
   };
 
   return (
@@ -159,6 +203,53 @@ const SurveyCreation = () => {
           <h2 style={{ fontSize: "24px", fontWeight: "bold", color: "#333" }}>Untitled</h2>
           {questions.map((question, qIndex) => (
             <div key={qIndex} style={{ border: "1px solid #ddd", borderRadius: "10px", padding: "20px", backgroundColor: "#fff", marginBottom: "20px" }}>
+              <div>
+                <Button
+                  variant="text"
+                  style={{
+                    color: "black",
+                    textTransform: "none",
+                    fontSize: "14px",
+                    fontWeight: "bold",
+                    borderBottom: activePage === "edit" ? "1.5px solid red" : "none",
+                    paddingBottom: "2px",
+                    outline: "none",
+                  }}
+                  onClick={() => {
+                    setActivePage("edit");
+                    setQuestions((prev) => prev.map((q, i) => (i === qIndex ? { ...q, showOptions: false } : q)));
+                  }}
+                >
+                  EDIT
+                </Button>
+                <Button
+                  variant="text"
+                  style={{
+                    color: "black",
+                    textTransform: "none",
+                    fontSize: "14px",
+                    fontWeight: "bold",
+                    marginLeft: "10px",
+                    borderBottom: activePage === "options" ? "1.5px solid red" : "none",
+                    paddingBottom: "2px",
+                    outline: "none",
+                  }}
+                  onClick={() => {
+                    setActivePage("options");
+                    handleToggleOptions(qIndex);
+                  }}
+                >
+                  OPTIONS
+                </Button>
+              </div>
+              {question.showOptions && (
+                <div style={{ marginTop: "10px" }}>
+                  <FormControlLabel control={<Checkbox />} label="Require an answer to this question" style={{ display: "block" }} />
+                  <FormControlLabel control={<Checkbox />} label="Shuffle answers for each respondent (does not apply to 'Other' or 'None of the Above' answer choices)" style={{ display: "block" }} />
+                  <FormControlLabel control={<Checkbox />} label="Shuffle questions for each respondent" style={{ display: "block" }} />
+                  <FormControlLabel control={<Checkbox />} label="Skip based on respondent’s answer" style={{ display: "block" }} />
+                </div>
+              )}
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <span style={{ fontWeight: "bold", fontSize: "16px" }}>Q{question.id}</span>
                 <div>
@@ -167,31 +258,50 @@ const SurveyCreation = () => {
                   <IconButton onClick={() => handleDeleteQuestion(qIndex)} style={{ color: "#6a4bbc" }}><Delete /></IconButton>
                 </div>
               </div>
-              <TextField 
-                placeholder="Enter the question" 
-                fullWidth 
-                variant="outlined" 
-                size="small" 
-                style={{ marginTop: "10px" }} 
-                value={question.text} 
+              <TextField
+                placeholder="Enter the question"
+                fullWidth
+                variant="outlined"
+                size="small"
+                style={{ marginTop: "10px" }}
+                value={question.text}
                 onChange={(e) => {
                   const newQuestions = [...questions];
                   newQuestions[qIndex].text = e.target.value;
                   setQuestions(newQuestions);
                 }}
-                onClick={() => handleExpand(qIndex)} 
+                onClick={() => handleExpand(qIndex)}
               />
               {question.expanded && (
                 <div style={{ marginTop: "20px" }}>
                   <strong>Predefined Options</strong>
                   {question.options.map((option, oIndex) => (
                     <div key={oIndex} style={{ display: "flex", alignItems: "center", marginTop: "10px" }}>
-                      <TextField value={option} size="small" fullWidth variant="outlined" style={{ flex: 1, marginRight: "10px" }} />
+                      {editingOption.qIndex === qIndex && editingOption.oIndex === oIndex ? (
+                        <TextField
+                          value={option}
+                          size="small"
+                          fullWidth
+                          variant="outlined"
+                          style={{ flex: 1, marginRight: "10px" }}
+                          onChange={(e) => handleOptionChange(qIndex, oIndex, e.target.value)}
+                          onBlur={() => handleSaveEditedOption(qIndex, oIndex, option)}
+                        />
+                      ) : (
+                        <TextField
+                          value={option}
+                          size="small"
+                          fullWidth
+                          variant="outlined"
+                          style={{ flex: 1, marginRight: "10px" }}
+                          onClick={() => handleEditOption(qIndex, oIndex)}
+                        />
+                      )}
                       <IconButton onClick={() => handleRemoveOption(qIndex, oIndex)}><RemoveCircleOutline /></IconButton>
                       <IconButton onClick={() => handleAddOption(qIndex)}><AddCircleOutline /></IconButton>
                     </div>
                   ))}
-                  <FormControlLabel control={<Checkbox />} label="Score this question (enable quiz mode)" />
+                  <FormControlLabel control={<Checkbox />} label="Score this question (enable quiz mode)" /><br/>
                   <FormControlLabel control={<Checkbox />} label="Add an 'Other' Answer Option" />
                 </div>
               )}
@@ -266,11 +376,11 @@ const SurveyCreation = () => {
         <DialogTitle style={{ fontWeight: "bold", backgroundColor: "white", padding: "15px" }}>
           Permissions
         </DialogTitle>
-        <DialogContent style={{ display: "flex", flexDirection: "column", width: "50rem", height: "35rem" }}>
-          <div style={{ backgroundColor: "#d3d3d3", padding: "10px", borderRadius: "5px" }}>
-            <FormControlLabel 
-              control={<Checkbox checked={dateTimeAllocationChecked} onChange={(e) => setDateTimeAllocationChecked(e.target.checked)} />} 
-              label="Date, Start and end time allocation" 
+        <DialogContent style={{ display: "flex", flexDirection: "column", width: "50rem", height: "35rem", backgroundColor: "#ebebeb" }}>
+          <div style={{ backgroundColor: "#ebebeb", padding: "10px", borderRadius: "5px" }}>
+            <FormControlLabel
+              control={<Checkbox checked={dateTimeAllocationChecked} onChange={(e) => setDateTimeAllocationChecked(e.target.checked)} />}
+              label="Date, Start and end time allocation"
             />
             {dateTimeAllocationChecked && (
               <div style={{ display: "flex", gap: "20px", marginLeft: "20px" }}>
@@ -279,12 +389,12 @@ const SurveyCreation = () => {
               </div>
             )}
           </div>
-          <hr style={{ width: "100%", border: "1px solid #ccc", margin: "15px 0" }} />
+          <hr style={{ width: "100%", border: "1px solid #ccc", margin: "15px 0", border: "2px solid #bdbdbd" }} />
 
-          <div style={{ backgroundColor: "#d3d3d3", padding: "10px", borderRadius: "5px" }}>
-            <FormControlLabel 
-              control={<Checkbox checked={schedulingFrequencyChecked} onChange={(e) => setSchedulingFrequencyChecked(e.target.checked)} />} 
-              label="Scheduling frequencies" 
+          <div style={{ backgroundColor: "#ebebeb", padding: "10px", borderRadius: "5px" }}>
+            <FormControlLabel
+              control={<Checkbox checked={schedulingFrequencyChecked} onChange={(e) => setSchedulingFrequencyChecked(e.target.checked)} />}
+              label="Scheduling frequencies"
             />
             {schedulingFrequencyChecked && (
               <div style={{ display: "flex", gap: "10px", marginLeft: "20px", flexWrap: "wrap" }}>
@@ -305,12 +415,12 @@ const SurveyCreation = () => {
               </div>
             )}
           </div>
-          <hr style={{ width: "100%", border: "1px solid #ccc", margin: "15px 0" }} />
+          <hr style={{ width: "100%", border: "1px solid #ccc", margin: "15px 0", border: "2px solid #bdbdbd" }} />
 
-          <div style={{ backgroundColor: "#d3d3d3", padding: "10px", borderRadius: "5px" }}>
-            <FormControlLabel 
-              control={<Checkbox checked={randomTimingChecked} onChange={(e) => setRandomTimingChecked(e.target.checked)} />} 
-              label="Populate in random timing in a specific duration of time" 
+          <div style={{ backgroundColor: "#ebebeb", padding: "10px", borderRadius: "5px" }}>
+            <FormControlLabel
+              control={<Checkbox checked={randomTimingChecked} onChange={(e) => setRandomTimingChecked(e.target.checked)} />}
+              label="Populate in random timing in a specific duration of time"
             />
             {randomTimingChecked && (
               <div style={{ display: "flex", alignItems: "center", gap: "10px", marginLeft: "20px" }}>
@@ -318,17 +428,17 @@ const SurveyCreation = () => {
               </div>
             )}
           </div>
-          <hr style={{ width: "100%", border: "1px solid #ccc", margin: "15px 0" }} />
+          <hr style={{ width: "100%", border: "1px solid #ccc", margin: "15px 0", border: "2px solid #bdbdbd" }} />
 
-          <div style={{ backgroundColor: "#d3d3d3", padding: "10px", borderRadius: "5px" }}>
+          <div style={{ backgroundColor: "#ebebeb", padding: "10px", borderRadius: "5px" }}>
             <FormControlLabel control={<Checkbox defaultChecked />} label="Send reminders to the respondents" />
           </div>
-          <hr style={{ width: "100%", border: "1px solid #ccc", margin: "15px 0" }} />
+          <hr style={{ width: "100%", border: "1px solid #ccc", margin: "15px 0", border: "2px solid #bdbdbd" }} />
 
-          <div style={{ backgroundColor: "#d3d3d3", padding: "10px", borderRadius: "5px" }}>
-            <FormControlLabel 
-              control={<Checkbox checked={assignRolesChecked} onChange={(e) => setAssignRolesChecked(e.target.checked)} />} 
-              label="Assign to roles" 
+          <div style={{ backgroundColor: "#ebebeb", padding: "10px", borderRadius: "5px" }}>
+            <FormControlLabel
+              control={<Checkbox checked={assignRolesChecked} onChange={(e) => setAssignRolesChecked(e.target.checked)} />}
+              label="Assign to roles"
             />
             {assignRolesChecked && (
               <div style={{ marginLeft: "20px", width: "200px" }}>
@@ -339,12 +449,12 @@ const SurveyCreation = () => {
               </div>
             )}
           </div>
-          <hr style={{ width: "100%", border: "1px solid #ccc", margin: "15px 0" }} />
+          <hr style={{ width: "100%", border: "1px solid #ccc", margin: "15px 0", border: "2px solid #bdbdbd" }} />
 
-          <div style={{ backgroundColor: "#d3d3d3", padding: "10px", borderRadius: "5px" }}>
-            <FormControlLabel 
-              control={<Checkbox checked={setResponseLimitChecked} onChange={(e) => setSetResponseLimitChecked(e.target.checked)} />} 
-              label="Set response limit" 
+          <div style={{ backgroundColor: "#ebebeb", padding: "10px", borderRadius: "5px" }}>
+            <FormControlLabel
+              control={<Checkbox checked={setResponseLimitChecked} onChange={(e) => setSetResponseLimitChecked(e.target.checked)} />}
+              label="Set response limit"
             />
             {setResponseLimitChecked && (
               <div style={{ marginLeft: "20px", width: "200px" }}>
@@ -356,30 +466,29 @@ const SurveyCreation = () => {
               </div>
             )}
           </div>
-                        <hr style={{ width: "100%", border: "1px solid #ccc", margin: "15px 0" }} />
-                      </DialogContent>
+          <hr style={{ width: "100%", border: "1px solid #ccc", margin: "15px 0", border: "2px solid #bdbdbd" }} />
+        </DialogContent>
 
-                      <DialogActions style={{ backgroundColor: "white", padding: "15px" }}>
-                        <Button onClick={() => setOpenDialog(false)} style={{ backgroundColor: "#28a745", color: "white", padding: "10px 20px" }}>
-                          Save
-                        </Button>
-                      </DialogActions>
-                    </Dialog>
-
+        <DialogActions style={{ backgroundColor: "white", padding: "15px" }}>
+          <Button onClick={() => setOpenDialog(false)} style={{ backgroundColor: "#28a745", color: "white", padding: "10px 20px" }}>
+            Save
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Modal for "Copy and paste questions" */}
       <Modal open={modalOpen} onClose={() => setModalOpen(false)}>
-        <Box sx={{ 
-          position: "absolute", 
-          top: "50%", 
-          left: "50%", 
-          transform: "translate(-50%, -50%)", 
-          width: 800, // Increased width to accommodate two sections
-          bgcolor: "background.paper", 
-          boxShadow: 24, 
+        <Box sx={{
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          width: 800,
+          bgcolor: "background.paper",
+          boxShadow: 24,
           p: 4,
           display: "flex",
-          gap: 4 // Adds space between the two sections
+          gap: 4
         }}>
           {/* Left Side - Question Input Area */}
           <Box sx={{ flex: 1 }}>
@@ -406,62 +515,61 @@ const SurveyCreation = () => {
               {inputText.split("\n\n").map((block, index) => {
                 const lines = block.split("\n");
                 const question = lines[0];
-          const choices = lines.slice(1);
-          return (
-            <Box key={index} sx={{ mb: 2 }}>
-              <Typography sx={{ fontWeight: "bold" }}>{question}</Typography>
-              {!hideAnswers && ( // Conditionally render answers
-                <ul style={{ listStyleType: "none", paddingLeft: 0 }}>
-                  {choices.map((choice, idx) => (
-                    <li key={idx} style={{ marginBottom: "8px" }}>
-                      <Typography>A{idx + 1}. {choice}</Typography>
-                    </li>
-                  ))}
-                </ul>
-              )}
+                const choices = lines.slice(1);
+                return (
+                  <Box key={index} sx={{ mb: 2 }}>
+                    <Typography sx={{ fontWeight: "bold" }}>{question}</Typography>
+                    {!hideAnswers && (
+                      <ul style={{ listStyleType: "none", paddingLeft: 0 }}>
+                        {choices.map((choice, idx) => (
+                          <li key={idx} style={{ marginBottom: "8px" }}>
+                            <Typography>A{idx + 1}. {choice}</Typography>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </Box>
+                );
+              })}
             </Box>
-          );
-        })}
-      </Box>
-      <Button
-        variant="text"
-        sx={{ color: "#6a4bbc", textTransform: "none" }}
-        onClick={() => setHideAnswers(!hideAnswers)} // Toggle hide/show answers
-      >
-        {hideAnswers ? "Show Answers" : "Hide Answers"}
-      </Button>
-    </Box>
+            <Button
+              variant="text"
+              sx={{ color: "#6a4bbc", textTransform: "none" }}
+              onClick={() => setHideAnswers(!hideAnswers)}
+            >
+              {hideAnswers ? "Show Answers" : "Hide Answers"}
+            </Button>
+          </Box>
 
-    {/* Bottom Buttons */}
-    <Box sx={{ 
-      position: "absolute", 
-      bottom: 16, 
-      right:28, 
-      display: "flex", 
-      gap: 2 
-    }}>
-      <Button
-        variant="contained"
-        onClick={handleAddParsedQuestions}
-        sx={{ 
-          backgroundColor: "#6a4bbc", 
-          color: "white", 
-          textTransform: "none",
-          borderRadius: 2,
-          px: 19,
-          py: 1,
-          fontSize: "14px", // Match the font size in the screenshot
-          fontWeight: "bold", // Match the bold text in the screenshot
-        }}
-      >
-        Add Questions
-      </Button>
-    </Box>
-  </Box>
-</Modal>
+          {/* Bottom Buttons */}
+          <Box sx={{
+            position: "absolute",
+            bottom: 16,
+            right: 28,
+            display: "flex",
+            gap: 2
+          }}>
+            <Button
+              variant="contained"
+              onClick={handleAddParsedQuestions}
+              sx={{
+                backgroundColor: "#6a4bbc",
+                color: "white",
+                textTransform: "none",
+                borderRadius: 2,
+                px: 19,
+                py: 1,
+                fontSize: "14px",
+                fontWeight: "bold",
+              }}
+            >
+              Add Questions
+            </Button>
+          </Box>
+        </Box>
+      </Modal>
     </div>
   );
 };
 
 export default SurveyCreation;
-         
