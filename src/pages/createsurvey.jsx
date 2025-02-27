@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import axios from "axios"; // Import axios for making HTTP requests
 import {
   TextField,
   Button,
@@ -38,6 +39,7 @@ const SurveyCreation = () => {
       scale: 3,
       expanded: false,
       showOptions: false,
+      require_answer: false,
     },
   ]);
 
@@ -183,6 +185,19 @@ const SurveyCreation = () => {
     setEditingOption({ qIndex: null, oIndex: null });
   };
 
+  // Function to save survey data to the database
+  const saveSurveyToDatabase = async () => {
+    try {
+      const response = await axios.post("http://localhost:5000/save-survey", questions);
+      if (response.status === 200) {
+        alert("Survey saved successfully!");
+      }
+    } catch (error) {
+      console.error("Error saving survey:", error);
+      alert("Failed to save survey.");
+    }
+  };
+
   return (
     <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", backgroundColor: "#f9f9f9" }}>
       <div style={{ width: "80rem", maxWidth: "112rem", backgroundColor: "#fff", padding: "20px", borderRadius: "10px", boxShadow: "0 4px 8px rgba(0,0,0,0.1)" }}>
@@ -244,10 +259,68 @@ const SurveyCreation = () => {
               </div>
               {question.showOptions && (
                 <div style={{ marginTop: "10px" }}>
-                  <FormControlLabel control={<Checkbox />} label="Require an answer to this question" style={{ display: "block" }} />
-                  <FormControlLabel control={<Checkbox />} label="Shuffle answers for each respondent (does not apply to 'Other' or 'None of the Above' answer choices)" style={{ display: "block" }} />
-                  <FormControlLabel control={<Checkbox />} label="Shuffle questions for each respondent" style={{ display: "block" }} />
-                  <FormControlLabel control={<Checkbox />} label="Skip based on respondent’s answer" style={{ display: "block" }} />
+                <FormControlLabel
+                                          control={
+                                            <Checkbox
+                                              checked={question.require_answer} // Bind to require_answer
+                                              onChange={(e) => {
+                                                const newQuestions = [...questions];
+                                                newQuestions[qIndex].require_answer = e.target.checked; // Update require_answer
+                                                setQuestions(newQuestions);
+                                              }}
+                                            />
+                                          }
+                                          label="Require an answer to this question"
+                                          style={{ display: "block" }}
+                />
+               <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={question.shuffle_answers} // Bind to shuffle_answers
+                          onChange={(e) => {
+                            const newQuestions = [...questions];
+                            newQuestions[qIndex].shuffle_answers = e.target.checked; // Update shuffle_answers
+                            console.log("Updated shuffle_answers:", newQuestions[qIndex].shuffle_answers); // Debug log
+                            setQuestions(newQuestions);
+                          }}
+                        />
+                      }
+                      label="Shuffle answers for each respondent (does not apply to 'Other' or 'None of the Above' answer choices)"
+                      style={{ display: "block" }}
+                />
+               <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={question.shuffle_questions} // Bind to shuffle_questions
+                            onChange={(e) => {
+                              // Create a new array with updated question
+                              const newQuestions = questions.map((q, index) => 
+                                index === qIndex ? { ...q, shuffle_questions: e.target.checked } : q
+                              );
+                              
+                              console.log("Updated shuffle_questions:", newQuestions[qIndex].shuffle_questions); // Debug log
+                              setQuestions(newQuestions); // Update state
+                            }}
+                          />
+                        }
+                        label="Shuffle questions for each respondent"
+                        style={{ display: "block" }}
+              
+                />
+                <FormControlLabel
+                          control={
+                            <Checkbox
+                              checked={question.skip_based_on_answer} // Bind to skip_based_on_answer
+                              onChange={(e) => {
+                                const newQuestions = [...questions];
+                                newQuestions[qIndex].skip_based_on_answer = e.target.checked; // Update skip_based_on_answer
+                                setQuestions(newQuestions);
+                              }}
+                            />
+                          }
+                          label="Skip based on respondent’s answer"
+                          style={{ display: "block" }}
+                />
                 </div>
               )}
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -258,20 +331,35 @@ const SurveyCreation = () => {
                   <IconButton onClick={() => handleDeleteQuestion(qIndex)} style={{ color: "#6a4bbc" }}><Delete /></IconButton>
                 </div>
               </div>
-              <TextField
-                placeholder="Enter the question"
-                fullWidth
-                variant="outlined"
-                size="small"
-                style={{ marginTop: "10px" }}
-                value={question.text}
-                onChange={(e) => {
-                  const newQuestions = [...questions];
-                  newQuestions[qIndex].text = e.target.value;
-                  setQuestions(newQuestions);
-                }}
-                onClick={() => handleExpand(qIndex)}
-              />
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: "10px" }}>
+                <TextField
+                  placeholder="Enter the question"
+                  fullWidth
+                  variant="outlined"
+                  size="small"
+                  value={question.text}
+                  onChange={(e) => {
+                    const newQuestions = [...questions];
+                    newQuestions[qIndex].text = e.target.value;
+                    setQuestions(newQuestions);
+                  }}
+                  onClick={() => handleExpand(qIndex)}
+                />
+                <Select
+                  value={question.type}
+                  onChange={(e) => {
+                    const newQuestions = [...questions];
+                    newQuestions[qIndex].type = e.target.value;
+                    setQuestions(newQuestions);
+                  }}
+                  size="small"
+                  style={{ minWidth: "150px" }}
+                >
+                  <MenuItem value="multiple">Multiple Choice</MenuItem>
+                  <MenuItem value="text">Text</MenuItem>
+                  <MenuItem value="scale">Scale</MenuItem>
+                </Select>
+              </div>
               {question.expanded && (
                 <div style={{ marginTop: "20px" }}>
                   <strong>Predefined Options</strong>
@@ -301,8 +389,34 @@ const SurveyCreation = () => {
                       <IconButton onClick={() => handleAddOption(qIndex)}><AddCircleOutline /></IconButton>
                     </div>
                   ))}
-                  <FormControlLabel control={<Checkbox />} label="Score this question (enable quiz mode)" /><br/>
-                  <FormControlLabel control={<Checkbox />} label="Add an 'Other' Answer Option" />
+                  <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={question.score_question} // Bind to score_question
+                            onChange={(e) => {
+                              const newQuestions = [...questions];
+                              newQuestions[qIndex].score_question = e.target.checked; // Update score_question
+                              setQuestions(newQuestions);
+                            }}
+                          />
+                        }
+                        label="Score this question (enable quiz mode)"
+                        style={{ display: "block" }}
+                  />
+                  <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={question.add_other_option} // Bind to add_other_option
+                            onChange={(e) => {
+                              const newQuestions = [...questions];
+                              newQuestions[qIndex].add_other_option = e.target.checked; // Update add_other_option
+                              setQuestions(newQuestions);
+                            }}
+                  />
+  }
+  label="Add an 'Other' Answer Option"
+  style={{ display: "block" }}
+/>
                 </div>
               )}
               <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", marginTop: "10px" }}>
@@ -324,7 +438,10 @@ const SurveyCreation = () => {
             <Button variant="contained" style={{ backgroundColor: "#6a4bbc", color: "white" }} onClick={handleAddQuestion}>+ Next Question</Button>
             <div>
               <Button variant="outlined" style={{ marginRight: "10px", borderColor: "#6a4bbc", color: "#6a4bbc" }}>Cancel</Button>
-              <Button variant="contained" style={{ backgroundColor: "#6a4bbc", color: "white" }} onClick={handleFinishSurvey}>Finish Survey</Button>
+              <Button variant="contained" style={{ backgroundColor: "#6a4bbc", color: "white" }} onClick={() => {
+                handleFinishSurvey();
+                saveSurveyToDatabase();
+              }}>Finish Survey</Button>
             </div>
           </div>
           <br />
