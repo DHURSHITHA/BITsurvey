@@ -168,57 +168,97 @@ const AssetsDict = () => {
           marginTop: "64px",
         }}
       >
-
-        {/* My Surveys Section */}
-        <Box sx={{ mb: 4 }}>
-          <Card sx={{ mb: 2 }}>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
+        {/* Use Grid to align the boxes in the same line */}
+        <Grid container spacing={3}>
+          {/* Assets Section */}
+          <Grid item xs={12} md={4}>
+            <Card sx={{ height: "100%", display: "flex", flexDirection: "column",backgroundColor:"#F5F8FE" }}>
+              <CardContent sx={{ flexGrow: 1 }}>
+              <Typography variant="h6" gutterBottom style={{ fontWeight: 'bold' }}>
                 Assets
-              </Typography>
-              <Typography variant="body1">
-                This template allows users to create structured product-related survey questions efficiently. It includes predefined question formats.
-              </Typography>
-              <Button variant="outlined" sx={{ mt: 2 }}>
-                Edit
-              </Button>
-            </CardContent>
-          </Card>
-        </Box>
+                </Typography>
+                <Typography variant="body1">
+                  This template allows users to create structured product-related survey questions efficiently. It includes predefined question formats.
+                </Typography>
+              </CardContent>
+              <Box sx={{ p: 2 }}>
+              <Button 
+                    variant="outlined" 
+                    sx={{ 
+                        width:"30px",
+                        color: "white", 
+                        borderColor: "#7F56D9",  
+                        backgroundColor:"#7F56D9",
+                        fontWeight: "bold" 
+                    }}
+                    >
+                    Edit
+             </Button>
 
-        {/* Skill Feedback Section */}
-        <Box sx={{ mb: 4 }}>
-          <Card sx={{ mb: 2 }}>
-            <CardContent>
-            <Typography variant="h5" gutterBottom>
-            Skill Feedback
-          </Typography>
-              <Typography variant="body1">
-                Gather valuable insights to enhance the academic experience through targeted feedback from students and faculty.
-              </Typography>
-              <Button variant="outlined" sx={{ mt: 2 }}>
-                Edit
-              </Button>
-            </CardContent>
-          </Card>
-        </Box>
+              </Box>
+            </Card>
+          </Grid>
 
-        {/* Academic Feedback Section */}
-        <Box sx={{ mb: 4 }}>
-          <Card sx={{ mb: 2 }}>
-            <CardContent>
-            <Typography variant="h5" gutterBottom>
-            Academic Feedback
-          </Typography>
-              <Typography variant="body1">
-                Gather valuable insights to enhance the academic experience through targeted feedback from students and faculty.
-              </Typography>
-              <Button variant="outlined" sx={{ mt: 2 }}>
-                Edit
-              </Button>
-            </CardContent>
-          </Card>
-        </Box>
+          {/* Skill Feedback Section */}
+          <Grid item xs={12} md={4}>
+            <Card sx={{ height: "100%", display: "flex", flexDirection: "column",backgroundColor:"#F5F8FE" }}>
+              <CardContent sx={{ flexGrow: 1 }}>
+              <Typography variant="h6" gutterBottom style={{ fontWeight: 'bold' }}>
+                Skill Feedback
+                </Typography>
+                <Typography variant="body1">
+                  Gather valuable insights to enhance the academic experience through targeted feedback from students and faculty.
+                </Typography>
+              </CardContent>
+              <Box sx={{ p: 2 }}>
+              <Button 
+                    variant="outlined" 
+                    fullWidth 
+                    sx={{ 
+                        width:"30px",
+                        color: "white", 
+                        borderColor: "#7F56D9",  
+                        backgroundColor:"#7F56D9",
+                        fontWeight: "bold" 
+                    }}
+                    >
+                    Edit
+             </Button>
+
+              </Box>
+            </Card>
+          </Grid>
+
+          {/* Academic Feedback Section */}
+          <Grid item xs={12} md={4}>
+            <Card sx={{ height: "100%", display: "flex", flexDirection: "column" ,backgroundColor:"#F5F8FE"}}>
+              <CardContent sx={{ flexGrow: 1 }}>
+              <Typography variant="h6" gutterBottom style={{ fontWeight: 'bold' }}>
+                Academic Feedback
+                </Typography>
+                <Typography variant="body1">
+                  Gather valuable insights to enhance the academic experience through targeted feedback from students and faculty.
+                </Typography>
+              </CardContent>
+              <Box sx={{ p: 2 }}>
+              <Button 
+                    variant="outlined" 
+                    fullWidth 
+                    sx={{ 
+                        width:"30px",
+                        color: "white", 
+                        borderColor: "#7F56D9",  
+                        backgroundColor:"#7F56D9",
+                        fontWeight: "bold" 
+                    }}
+                    >
+                    Edit
+             </Button>
+
+              </Box>
+            </Card>
+          </Grid>
+        </Grid>
       </Box>
     </Box>
   );
