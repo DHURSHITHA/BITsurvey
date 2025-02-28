@@ -40,6 +40,13 @@ const SurveyCreation = () => {
       expanded: false,
       showOptions: false,
       require_answer: false,
+      "shuffle_answers": false,
+    "shuffle_questions": false,
+    "skip_based_on_answer": false,
+    "type": "multiple",
+    "score_question": false,
+    "add_other_option": false,
+    "require_answer": false
     },
   ]);
 
@@ -188,7 +195,7 @@ const SurveyCreation = () => {
   // Function to save survey data to the database
   const saveSurveyToDatabase = async () => {
     try {
-      const response = await axios.post("http://localhost:5000/save-survey", questions);
+      const response = await axios.post("http://localhost:3000/save-survey", questions);
       if (response.status === 200) {
         alert("Survey saved successfully!");
       }
@@ -210,7 +217,7 @@ const SurveyCreation = () => {
           <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
             <IconButton><Settings /></IconButton>
             <IconButton><Notifications /></IconButton>
-            <Avatar style={{ width: "40px", height: "40px" }} src="https://via.placeholder.com/40" />
+            {/* <Avatar style={{ width: "40px", height: "40px" }} src="https://via.placeholder.com/40" /> */}
           </div>
         </div>
         {/* Survey Box */}
