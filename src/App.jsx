@@ -47,6 +47,9 @@ import DashboardCreated from "./pages/dashboard";
 import AssetsDict from "./pages/assets";
 import Login from "./pages/login/login";
 import Register from "./pages/register/register";
+import FeedbackForm from "./pages/Feedbackform";
+import AcademicFeedbackForm from "./pages/academicfb";
+import EditableTable from "./pages/producttemplate";
 
 function App() {
   return (
@@ -62,6 +65,10 @@ function App() {
         <Route path="/create-survey" element={<SurveyCreation />} />
         <Route path="/create-new" element={<SurveyCreation />} />
         <Route path="/question-modal" element={<QuestionModal />} />
+        <Route path="/question-modal" element={<QuestionModal />} />
+        <Route path="/Feedbackform" element={<FeedbackForm />} />
+        <Route path="/academicfb" element={<AcademicFeedbackForm />} />
+        <Route path="/producttemplate" element={<EditableTable />} />
       </Routes>
     </BrowserRouter>
   );
