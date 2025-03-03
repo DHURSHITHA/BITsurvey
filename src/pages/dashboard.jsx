@@ -3,7 +3,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import {
   Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText,
   AppBar, Toolbar, Typography, Box, CssBaseline, IconButton, InputBase,
-  Avatar, Button, useMediaQuery, useTheme, Grid, Card, CardContent
+  Avatar, Button, useMediaQuery, useTheme, Grid, Card, CardContent, Modal,
+  TextField, MenuItem, Select, FormControl, InputLabel
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import DashboardIcon from "@mui/icons-material/Dashboard";
@@ -13,8 +14,15 @@ import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import SearchIcon from "@mui/icons-material/Search";
 import SettingsIcon from "@mui/icons-material/Settings";
 import NotificationsIcon from "@mui/icons-material/Notifications";
-import CreateSurveyImage from "../assets/create_survey.jpg"; // Import the image
+import CreateSurveyImage from "../assets/create_survey.png";
 import TemplateImage from "../assets/templates.png";
+import CloseIcon from "@mui/icons-material/Close";
+import profile1 from "../assets/profile1.jpg";
+import profile2 from "../assets/profile2.jpg";
+import profile3 from "../assets/profile3.jpg";
+import skillImage from "../assets/image.png"; // Replace with the correct path to your image
+import RPImage from "../assets/rp.png";
+import contactImage from "../assets/contact.png";
 
 const desktopDrawerWidth = 220;
 const primaryColor200 = "#7B3DFF";
@@ -23,14 +31,24 @@ const DashboardCreated = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [selectedOption, setSelectedOption] = useState("Live"); // State to track selected option
+  const [selectedOption, setSelectedOption] = useState("Live");
+  const [openGroupModal, setOpenGroupModal] = useState(false);
+  const [showConditions, setShowConditions] = useState(false); // State to toggle between screens
+  const [showSkills, setShowSkills] = useState(false); // State to toggle skills visibility
+  const [selectedSkill, setSelectedSkill] = useState(null); // State to track the selected skill
+  const [selectedLevels, setSelectedLevels] = useState([]); // State to track selected levels
+  const [showRPInput, setShowRPInput] = useState(false); // State to toggle RP input fields
+  const [startRange, setStartRange] = useState(""); // State for starting range
+  const [endRange, setEndRange] = useState(""); // State for ending range
+  const [showRoleDropdown, setShowRoleDropdown] = useState(false); // State to toggle role dropdown
+  const [selectedRole, setSelectedRole] = useState(""); // State to track selected role
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const menuItems = [
-    { text: "Dashboard", icon: <DashboardIcon />, path: "/" },
-    { text: "My surveys", icon: <DescriptionIcon />, path: "/surveys" },
-    { text: "Mentoring", icon: <GroupIcon />, path: "/mentoring" },
+    { text: "Dashboard", icon: <DashboardIcon />, path: "/dashboard" },
+    { text: "My surveys", icon: <DescriptionIcon />, path: "/survey" },
+    { text: "Mentoring", icon: <GroupIcon />, path: "/mentor" },
   ];
 
   const handleDrawerToggle = () => {
@@ -46,7 +64,80 @@ const DashboardCreated = () => {
   };
 
   const handleOptionClick = (option) => {
-    setSelectedOption(option); // Update the selected option
+    setSelectedOption(option);
+  };
+
+  const handleOpenGroupModal = () => {
+    setOpenGroupModal(true);
+    setShowConditions(false); // Reset to group creation screen when modal opens
+  };
+
+  const handleCloseGroupModal = () => {
+    setOpenGroupModal(false);
+  };
+
+  const handleSetConditions = () => {
+    setShowConditions(true); // Show the conditions screen
+  };
+
+  const handleSkillBoxClick = () => {
+    setShowSkills(true); // Show skills functionality
+    setShowRPInput(false); // Hide RP input fields
+    setShowRoleDropdown(false); // Hide role dropdown
+  };
+
+  const handleSkillClick = (skill) => {
+    setSelectedSkill(skill); // Set the selected skill
+  };
+
+  const handleLevelClick = (level) => {
+    const combinedSkillLevel = `${selectedSkill} ${level}`;
+    if (selectedLevels.includes(combinedSkillLevel)) {
+      setSelectedLevels(selectedLevels.filter(item => item !== combinedSkillLevel));
+    } else {
+      setSelectedLevels([...selectedLevels, combinedSkillLevel]);
+    }
+  };
+
+  const handleDeselectAll = () => {
+    setSelectedLevels([]); // Clear all selected levels
+  };
+
+  const handleRPBoxClick = () => {
+    setShowRPInput(true); // Show RP input fields
+    setShowSkills(false); // Hide skills functionality
+    setShowRoleDropdown(false); // Hide role dropdown
+  };
+
+  const handleRoleBoxClick = () => {
+    setShowRoleDropdown(true); // Show role dropdown
+    setShowSkills(false); // Hide skills functionality
+    setShowRPInput(false); // Hide RP input fields
+  };
+
+  const handleRoleChange = (event) => {
+    setSelectedRole(event.target.value); // Set the selected role
+  };
+
+  const getLevelButtons = (skill) => {
+    switch (skill) {
+      case "C PROGRAMMING":
+        return ["Level1", "Level2", "Level3", "Level4", "Level5", "Level6", "Level7"];
+      case "PYTHON":
+        return ["Level1", "Level2", "Level3", "Level4"];
+      case "SQL":
+        return ["Level1"];
+      case "PROBLEM SOLVING":
+        return ["Level1", "Level2"];
+      case "JAVA":
+        return ["Level1", "Level2", "Level3"];
+      case "UIUX":
+        return ["Level1", "Level2", "Level3"];
+      case "APTITUDE":
+        return ["Level1", "Level2", "Level3", "Level4", "Level5", "Level6"];
+      default:
+        return [];
+    }
   };
 
   const drawer = (
@@ -105,7 +196,6 @@ const DashboardCreated = () => {
         }}
       >
         <Toolbar sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          {/* Left Side: Drawer Toggle & Title */}
           <Box sx={{ display: "flex", alignItems: "center" }}>
             <IconButton color="inherit" edge="start" onClick={handleDrawerToggle} sx={{ mr: 1, display: { sm: "none" } }}>
               <MenuIcon />
@@ -115,7 +205,6 @@ const DashboardCreated = () => {
             </Typography>
           </Box>
 
-          {/* Center: Search Bar */}
           <Box
             sx={{
               display: "flex",
@@ -135,7 +224,6 @@ const DashboardCreated = () => {
             />
           </Box>
 
-          {/* Right Side: Notifications & Settings Icons */}
           <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 0.8, sm: 2 } }}>
             <IconButton sx={{ backgroundColor: "#F5F6FA", p: 1 }}>
               <SettingsIcon sx={{ color: "#7A7A7A", fontSize: { xs: "10px", sm: "24px" } }} />
@@ -150,23 +238,21 @@ const DashboardCreated = () => {
         </Toolbar>
       </AppBar>
 
-      {/* Drawer Component */}
       <Drawer
-        variant={isMobile ? "temporary" : "permanent"} // Use temporary variant on mobile
-        open={isMobile ? mobileOpen : true} // Use mobileOpen state for mobile view
-        onClose={handleDrawerToggle} // Handle closing the drawer on mobile
+        variant={isMobile ? "temporary" : "permanent"}
+        open={isMobile ? mobileOpen : true}
+        onClose={handleDrawerToggle}
         sx={{
           width: desktopDrawerWidth,
           flexShrink: 0,
           display: { xs: "none", sm: "block" },
           "& .MuiDrawer-paper": { width: desktopDrawerWidth, boxSizing: "border-box" },
-          ...(isMobile && { display: "block" }), // Ensure drawer is displayed on mobile
+          ...(isMobile && { display: "block" }),
         }}
       >
         {drawer}
       </Drawer>
 
-      {/* Main Content */}
       <Box
         component="main"
         sx={{
@@ -176,9 +262,7 @@ const DashboardCreated = () => {
           marginTop: "64px",
         }}
       >
-        {/* Create Survey, Templates, and Create Groups Sections */}
         <Grid container spacing={2}>
-          {/* Create Survey Section */}
           <Grid item xs={12} md={4}>
             <Card 
               sx={{ 
@@ -191,9 +275,9 @@ const DashboardCreated = () => {
               <CardContent>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                   <img
-                    src={CreateSurveyImage} // Use the imported image
+                    src={CreateSurveyImage}
                     alt="Create Survey"
-                    style={{ width: "auto", height: "70px" }} // Adjust size as needed
+                    style={{ width: "auto", height: "70px" }}
                   />
                   <Typography variant="h6" gutterBottom>
                     Create Survey
@@ -207,7 +291,6 @@ const DashboardCreated = () => {
             </Card>
           </Grid>
 
-          {/* Templates Section */}
           <Grid item xs={12} md={4}>
             <Card 
               sx={{ 
@@ -220,9 +303,9 @@ const DashboardCreated = () => {
               <CardContent>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                   <img
-                    src={TemplateImage} // Use the imported image
+                    src={TemplateImage}
                     alt="Templates"
-                    style={{ width: "auto", height: "70px" }} // Adjust size as needed
+                    style={{ width: "auto", height: "70px" }}
                   />
                   <Typography variant="h6" gutterBottom>
                     Templates
@@ -236,7 +319,6 @@ const DashboardCreated = () => {
             </Card>
           </Grid>
 
-          {/* Create Groups Section */}
           <Grid item xs={12} md={4}>
             <Card 
               sx={{ 
@@ -244,14 +326,14 @@ const DashboardCreated = () => {
                 cursor: "pointer", 
                 "&:hover": { boxShadow: 3 } 
               }} 
-              onClick={() => handleNavigation("/create-groups")}
+              onClick={handleOpenGroupModal}
             >
               <CardContent>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                   <img
-                    src={CreateSurveyImage} // Use the imported image
+                    src={CreateSurveyImage}
                     alt="Create Groups"
-                    style={{ width: "auto", height: "70px" }} // Adjust size as needed
+                    style={{ width: "auto", height: "70px" }}
                   />
                   <Typography variant="h6" gutterBottom>
                     Create Groups
@@ -266,7 +348,6 @@ const DashboardCreated = () => {
           </Grid>
         </Grid>
 
-        {/* Options for Live, Scheduled, Draft, All surveys, Completed, Group surveys */}
         <Box sx={{ display: "flex", gap: 4, mt: 3 }}>
           {["Live", "Scheduled", "Draft", "All surveys", "Completed", "Group surveys"].map((option) => (
             <Button
@@ -278,20 +359,20 @@ const DashboardCreated = () => {
                 color: selectedOption === option ? primaryColor200 : "text.secondary",
                 borderBottom: selectedOption === option ? `2px solid ${primaryColor200}` : "none",
                 borderRadius: 0,
-                padding: 0, // Remove default padding
-                minWidth: "auto", // Remove minimum width
-                backgroundColor: "transparent", // Ensure no background color
+                padding: 0,
+                minWidth: "auto",
+                backgroundColor: "transparent",
                 "&:hover": {
-                  backgroundColor: "transparent", // Remove hover background color
+                  backgroundColor: "transparent",
                 },
                 "&:active": {
-                  backgroundColor: "transparent", // Remove background color on click
+                  backgroundColor: "transparent",
                 },
                 "&:focus": {
-                  outline: "none", // Remove focus outline
+                  outline: "none",
                 },
                 "&:focus-visible": {
-                  outline: "none", // Remove focus outline for keyboard navigation
+                  outline: "none",
                 },
               }}
             >
@@ -300,7 +381,6 @@ const DashboardCreated = () => {
           ))}
         </Box>
 
-        {/* Display details based on selected option */}
         <Box sx={{ mt: 2 }}>
           {selectedOption === "Live" && <Typography>Live surveys will be displayed here.</Typography>}
           {selectedOption === "Scheduled" && <Typography>Scheduled surveys will be displayed here.</Typography>}
@@ -310,6 +390,464 @@ const DashboardCreated = () => {
           {selectedOption === "Group surveys" && <Typography>Group surveys will be displayed here.</Typography>}
         </Box>
       </Box>
+
+      {/* Group Creation Modal */}
+      <Modal
+        open={openGroupModal}
+        onClose={handleCloseGroupModal}
+        aria-labelledby="group-creation-modal"
+        aria-describedby="group-creation-modal-description"
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Box sx={{
+          backgroundColor: "#fff",
+          padding: "40px",
+          borderRadius: "8px",
+          width: "650px",
+          height: "530px",
+          textAlign: "left",
+          position: "relative",
+        }}>
+          {/* Close icon in the top-right corner */}
+          <IconButton
+            onClick={handleCloseGroupModal}
+            sx={{
+              position: "absolute",
+              top: "10px",
+              right: "10px",
+              color: "red",
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+
+          {/* Toggle between Group Creation and Conditions screens */}
+          {!showConditions ? (
+            <>
+              {/* Group creation screen */}
+              <Typography
+                id="group-creation-modal"
+                variant="h6"
+                component="h2"
+                sx={{
+                  fontWeight: "bold",
+                  textAlign: "left",
+                  marginLeft: "10px",
+                }}
+              >
+                Group creation
+              </Typography>
+
+              {/* Overlapping profile pictures */}
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  position: "relative",
+                  width: "100%",
+                  height: "80px",
+                  marginTop: "20px",
+                }}
+              >
+                {/* Left profile picture */}
+                <Box
+                  sx={{
+                    width: "60px",
+                    height: "60px",
+                    borderRadius: "50%",
+                    overflow: "hidden",
+                    position: "absolute",
+                    left: "30%",
+                    zIndex: 1,
+                    border: "2px solid white",
+                  }}
+                >
+                  <img
+                    src={profile1}
+                    alt="Profile 1"
+                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                  />
+                </Box>
+
+                {/* Center profile picture */}
+                <Box
+                  sx={{
+                    width: "90px",
+                    height: "90px",
+                    borderRadius: "50%",
+                    overflow: "hidden",
+                    position: "absolute",
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    zIndex: 2,
+                    border: "2px solid white",
+                  }}
+                >
+                  <img
+                    src={profile2}
+                    alt="Profile 2"
+                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                  />
+                </Box>
+
+                {/* Right profile picture */}
+                <Box
+                  sx={{
+                    width: "60px",
+                    height: "60px",
+                    borderRadius: "50%",
+                    overflow: "hidden",
+                    position: "absolute",
+                    right: "30%",
+                    zIndex: 1,
+                    border: "2px solid white",
+                  }}
+                >
+                  <img
+                    src={profile3}
+                    alt="Profile 3"
+                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                  />
+                </Box>
+              </Box>
+
+              <Typography sx={{ mt: 10, textAlign: "center", color: "grey" }}>
+                You wanna create a new group! Add members to <br />contribute to your survey.
+              </Typography>
+
+              {/* Buttons with bold text */}
+              <Box sx={{ mt: 4, ml: 28 }}>
+                <Button
+                  variant="contained"
+                  onClick={handleSetConditions}
+                  sx={{
+                    fontWeight: "bold",
+                    backgroundColor: "#7B61FF",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: "4px 12px", // Reduced padding
+                    fontSize: "0.75rem", // Reduced font size
+                    height: "32px", // Reduced height
+                  }}
+                >
+                  Set Conditions
+                </Button>
+              </Box>
+            </>
+          ) : (
+            <>
+              {/* Conditions screen */}
+              <Typography
+                id="group-creation-modal"
+                variant="h6"
+                component="h2"
+                sx={{
+                  fontWeight: "bold",
+                  textAlign: "left",
+                  marginLeft: "10px",
+                }}
+              >
+                Set Conditions
+              </Typography>
+
+              <Box
+                sx={{
+                  display: "flex", // Align boxes horizontally
+                  gap: 2, // Add spacing between boxes
+                  mt: 2, // Margin top
+                  ml: "10px", // Margin left
+                }}
+              >
+                {/* Skill Box */}
+                <Box
+                  sx={{
+                    border: "1px solid #ddd", // Add border
+                    borderRadius: "4px", // Rounded corners
+                    padding: "8px 16px", // Padding inside the box
+                    textAlign: "center", // Center text
+                    flex: 1, // Equal width for all boxes
+                    display: "flex", // Use flexbox to align image and text
+                    flexDirection: "column", // Stack image and text vertically
+                    alignItems: "center", // Center items horizontally
+                    gap: "8px", // Add spacing between image and text
+                    cursor: "pointer", // Add pointer cursor
+                  }}
+                  onClick={handleSkillBoxClick}
+                >
+                  {/* Image */}
+                  <img
+                    src={skillImage} // Replace with the correct path to your image
+                    alt="Skill"
+                    style={{ width: "30px", height: "30px", borderRadius: "50%" }} // Adjust size and styling
+                  />
+                  {/* Text */}
+                  <Typography>Skill</Typography>
+                </Box>
+
+                {/* RP Box */}
+                <Box
+                  sx={{
+                    border: "1px solid #ddd", // Add border
+                    borderRadius: "4px", // Rounded corners
+                    padding: "8px 16px", // Padding inside the box
+                    textAlign: "center", // Center text
+                    flex: 1, // Equal width for all boxes
+                    display: "flex", // Use flexbox to align image and text
+                    flexDirection: "column", // Stack image and text vertically
+                    alignItems: "center", // Center items horizontally
+                    gap: "8px", // Add spacing between image and text
+                    cursor: "pointer", // Add pointer cursor
+                  }}
+                  onClick={handleRPBoxClick}
+                >
+                  {/* Image */}
+                  <img
+                    src={RPImage} // Replace with the correct path to your image
+                    alt="RP"
+                    style={{ width: "40px", height: "28px", borderRadius: "50%" }} // Adjust size and styling
+                  />
+                  {/* Text */}
+                  <Typography>RP</Typography>
+                </Box>
+
+                {/* Roles Box */}
+                <Box
+                  sx={{
+                    border: "1px solid #ddd", // Add border
+                    borderRadius: "4px", // Rounded corners
+                    padding: "8px 16px", // Padding inside the box
+                    textAlign: "center", // Center text
+                    flex: 1, // Equal width for all boxes
+                    display: "flex", // Use flexbox to align image and text
+                    flexDirection: "column", // Stack image and text vertically
+                    alignItems: "center", // Center items horizontally
+                    gap: "8px", // Add spacing between image and text
+                    cursor: "pointer", // Add pointer cursor
+                  }}
+                  onClick={handleRoleBoxClick}
+                >
+                  {/* Image */}
+                  <img
+                    src={contactImage} // Replace with the correct path to your image
+                    alt="Role"
+                    style={{ width: "40px", height: "30px", borderRadius: "50%" }} // Adjust size and styling
+                  />
+                  {/* Text */}
+                  <Typography>Role</Typography>
+                </Box>
+              </Box>
+
+              {/* Skills Buttons */}
+              {showSkills && (
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: 1,
+                    mt: 2,
+                    ml: "10px",
+                  }}
+                >
+                  {["C PROGRAMMING", "PYTHON", "SQL", "PROBLEM SOLVING", "JAVA", "UIUX", "APTITUDE"].map((skill, index) => (
+                    <Button
+                      key={index}
+                      variant="contained"
+                      onClick={() => handleSkillClick(skill)}
+                      sx={{
+                        textTransform: "none",
+                        backgroundColor: selectedSkill === skill ? "#6A50E0" : "rgb(226, 222, 248)", // Background color
+                        color: selectedSkill === skill ? "white" : "black", // Text color
+                        borderRadius: "20px", // Rounded corners
+                        border: "2px solid #6A50E0", // Border color
+                        padding: "2px 8px", // Further reduce padding to make the button smaller
+                        fontSize: "0.7rem", // Reduced font size
+                        height: "24px", // Reduced height
+                        "&:hover": {
+                          backgroundColor: "#6A50E0", // Change background color on hover
+                          borderColor: "#6A50E0", // Change border color on hover
+                        },
+                      }}
+                    >
+                      {skill}
+                    </Button>
+                  ))}
+                </Box>
+              )}
+
+              {/* Level Buttons */}
+              {selectedSkill && showSkills && (
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: 1,
+                    mt: 2,
+                    ml: "10px",
+                  }}
+                >
+                  {getLevelButtons(selectedSkill).map((level, index) => (
+                    <Button
+                      key={index}
+                      variant="contained"
+                      onClick={() => handleLevelClick(level)}
+                      sx={{
+                        textTransform: "none",
+                        backgroundColor: selectedLevels.includes(`${selectedSkill} ${level}`) ? "#6A50E0" : "rgb(226, 222, 248)", // Background color
+                        color: selectedLevels.includes(`${selectedSkill} ${level}`) ? "white" : "black", // Text color
+                        borderRadius: "20px", // Rounded corners
+                        border: "2px solid #6A50E0", // Border color
+                        padding: "2px 8px", // Further reduce padding to make the button smaller
+                        fontSize: "0.7rem", // Reduced font size
+                        height: "24px", // Reduced height
+                        "&:hover": {
+                          backgroundColor: "#6A50E0", // Change background color on hover
+                          borderColor: "#6A50E0", // Change border color on hover
+                        },
+                      }}
+                    >
+                      {level}
+                    </Button>
+                  ))}
+                </Box>
+              )}
+
+              {/* RP Input Fields */}
+              {showRPInput && (
+                <Box
+                  sx={{
+                    mt: 2,
+                    ml: "10px",
+                    display: "flex",
+                    gap: 2,
+                  }}
+                >
+                  <TextField
+                    label="Start Range"
+                    variant="outlined"
+                    value={startRange}
+                    onChange={(e) => setStartRange(e.target.value)}
+                    sx={{ width: "150px" }}
+                  />
+                  <TextField
+                    label="End Range"
+                    variant="outlined"
+                    value={endRange}
+                    onChange={(e) => setEndRange(e.target.value)}
+                    sx={{ width: "150px" }}
+                  />
+                </Box>
+              )}
+
+              {/* Role Dropdown */}
+              {showRoleDropdown && (
+                <Box
+                  sx={{
+                    mt: 2,
+                    ml: "10px",
+                  }}
+                >
+                  <FormControl fullWidth>
+                    <InputLabel id="role-select-label">Role</InputLabel>
+                    <Select
+                      labelId="role-select-label"
+                      id="role-select"
+                      value={selectedRole}
+                      label="Role"
+                      onChange={handleRoleChange}
+                      sx={{ width: "200px" }}
+                    >
+                      <MenuItem value="Faculty">Faculty</MenuItem>
+                      <MenuItem value="Student">Student</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Box>
+              )}
+
+              {/* Selected Levels Box */}
+              {selectedLevels.length > 0 && showSkills && (
+                <Box
+                  sx={{
+                    mt: 2,
+                    ml: "10px",
+                    border: "1px solid #ddd",
+                    borderRadius: "4px",
+                    padding: "16px",
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: 1,
+                    }}
+                  >
+                    {selectedLevels.map((level, index) => (
+                      <Button
+                        key={index}
+                        variant="contained"
+                        sx={{
+                          textTransform: "none",
+                          backgroundColor: "rgb(226, 222, 248)", // Background color
+                          color: "black", // Text color
+                          borderRadius: "20px", // Rounded corners
+                          border: "2px solid #6A50E0", // Border color
+                          padding: "2px 8px", // Further reduce padding to make the button smaller
+                          fontSize: "0.7rem", // Reduced font size
+                          height: "24px", // Reduced height
+                          "&:hover": {
+                            backgroundColor: "#6A50E0", // Change background color on hover
+                            borderColor: "#6A50E0", // Change border color on hover
+                          },
+                        }}
+                      >
+                        {level}
+                      </Button>
+                    ))}
+                  </Box>
+                  <Button
+                    onClick={handleDeselectAll}
+                    sx={{
+                      mt: 2,
+                      textTransform: "none",
+                      color: "red",
+                      fontSize: "0.7rem", // Reduced font size
+                      "&:hover": {
+                        backgroundColor: "transparent",
+                      },
+                    }}
+                  >
+                    Deselect All
+                  </Button>
+                </Box>
+              )}
+
+              {/* See Results Button */}
+              <Box sx={{ mt: 2, ml: 52 }}>
+                <Button
+                  variant="contained"
+                  onClick={handleSetConditions}
+                  sx={{
+                    fontWeight: "bold",
+                    backgroundColor: "#7B61FF",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: "4px 12px", // Reduced padding
+                    fontSize: "0.75rem", // Reduced font size
+                    height: "32px", // Reduced height
+                  }}
+                >
+                  See Results
+                </Button>
+              </Box>
+            </>
+          )}
+        </Box>
+      </Modal>
     </Box>
   );
 };

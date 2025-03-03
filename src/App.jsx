@@ -50,7 +50,9 @@ import Register from "./pages/register/register";
 import FeedbackForm from "./pages/Feedbackform";
 import AcademicFeedbackForm from "./pages/academicfb";
 import EditableTable from "./pages/producttemplate";
-
+import DashboardUser from "./pages/user";
+import MySurvey from "./pages/survey";
+import Mentor from "./pages/mentor";
 function App() {
   return (
     <BrowserRouter>
@@ -58,7 +60,10 @@ function App() {
         {/* Public Routes */}
         <Route path="/" element={<Login />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/user" element={<DashboardUser/>} />
         <Route path="/register" element={<Register />} />
+        <Route path="/mentor" element={<Mentor />} />
+        <Route path="/survey" element={<MySurvey />} />
         <Route path="/dashboard" element={<DashboardCreated />} />
         <Route path="/dashboardnull" element={<DashboardLayout />} />
         <Route path="/templates" element={<AssetsDict />} />

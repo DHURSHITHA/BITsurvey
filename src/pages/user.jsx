@@ -13,13 +13,12 @@ import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import SearchIcon from "@mui/icons-material/Search";
 import SettingsIcon from "@mui/icons-material/Settings";
 import NotificationsIcon from "@mui/icons-material/Notifications";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import Bag from "../assets/baaag.png";
+
 
 const desktopDrawerWidth = 220;
 const primaryColor200 = "#7B3DFF";
 
-const DashboardLayout = () => {
+const DashboardUser = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -28,9 +27,9 @@ const DashboardLayout = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const menuItems = [
-    { text: "Dashboard", icon: <DashboardIcon />, path: "/dashboardnull" },
+    { text: "Dashboard", icon: <DashboardIcon />, path: "/" },
     { text: "My surveys", icon: <DescriptionIcon />, path: "/surveys" },
-    { text: "Mentoring", icon: <GroupIcon />, path: "/mentors" },
+    { text: "Mentoring", icon: <GroupIcon />, path: "/mentoring" },
   ];
 
   const handleDrawerToggle = () => {
@@ -158,66 +157,9 @@ const DashboardLayout = () => {
         {drawer}
       </Drawer>
 
-      <Box
-        sx={{
-          flexGrow: 1,
-          p: 3,
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          flexDirection: "column",
-          textAlign: "center",
-        }}
-      >
-        <img
-          src={Bag}
-          alt="No Surveys"
-          style={{
-            width: isMobile ? "80px" : "120px",
-            height: isMobile ? "80px" : "120px",
-            objectFit: "contain",
-          }}
-        />
-        <Typography sx={{ mt: 2, fontWeight: "bold", fontSize: isMobile ? "13px" : "15px" }}>
-          No Surveys Yet?
-        </Typography>
-        <Button
-          variant="contained"
-          sx={{
-            mt: 2,
-            backgroundColor: primaryColor200,
-            borderRadius: "10px",
-            px: 3,
-            fontSize: isMobile ? "12px" : "14px",
-            py: isMobile ? "6px" : "8px",
-          }}
-          onClick={() => setOpen(true)}
-        >
-          + New Survey
-        </Button>
-
-        {/* Modal Popup */}
-        <Dialog
-          open={open}
-          onClose={() => setOpen(false)}
-          sx={{ "& .MuiDialog-paper": { padding: 3, borderRadius: "12px" } }}
-        >
-          <Box sx={{ textAlign: "center", p: 3 }}>
-            <CheckCircleIcon sx={{ color: "green", fontSize: 40, mb: 1 }} />
-            <Typography sx={{ fontWeight: "bold", mb: 2 }}>Choose your choice</Typography>
-            <Box sx={{ display: "flex", gap: 2 }}>
-              <Button variant="contained" sx={{ backgroundColor: "#7B61FF" }} onClick={() => navigate("/templates")}>
-                Templates
-              </Button>
-              <Button variant="contained" sx={{ backgroundColor: "#7B61FF" }} onClick={() => navigate("/create-new")}>
-                Create New
-              </Button>
-            </Box>
-          </Box>
-        </Dialog>
-      </Box>
+     
     </Box>
   );
 };
 
-export default DashboardLayout;
+export default DashboardUser;

@@ -19,18 +19,19 @@ import Bag from "../assets/baaag.png";
 const desktopDrawerWidth = 220;
 const primaryColor200 = "#7B3DFF";
 
-const DashboardLayout = () => {
+const Mentor = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [open, setOpen] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const [selectedOption, setSelectedOption] = useState("Live"); // State for selected survey option
 
   const menuItems = [
-    { text: "Dashboard", icon: <DashboardIcon />, path: "/dashboardnull" },
-    { text: "My surveys", icon: <DescriptionIcon />, path: "/surveys" },
-    { text: "Mentoring", icon: <GroupIcon />, path: "/mentors" },
+    { text: "Dashboard", icon: <DashboardIcon />, path: "/dashboard" },
+    { text: "My surveys", icon: <DescriptionIcon />, path: "/survey" },
+    { text: "Mentoring", icon: <GroupIcon />, path: "/mentor" },
   ];
 
   const handleDrawerToggle = () => {
@@ -39,6 +40,10 @@ const DashboardLayout = () => {
 
   const handleLogout = () => {
     navigate("/");
+  };
+
+  const handleOptionClick = (option) => {
+    setSelectedOption(option);
   };
 
   const drawer = (
@@ -158,66 +163,48 @@ const DashboardLayout = () => {
         {drawer}
       </Drawer>
 
-      <Box
-        sx={{
-          flexGrow: 1,
-          p: 3,
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          flexDirection: "column",
-          textAlign: "center",
-        }}
-      >
-        <img
-          src={Bag}
-          alt="No Surveys"
-          style={{
-            width: isMobile ? "80px" : "120px",
-            height: isMobile ? "80px" : "120px",
-            objectFit: "contain",
-          }}
-        />
-        <Typography sx={{ mt: 2, fontWeight: "bold", fontSize: isMobile ? "13px" : "15px" }}>
-          No Surveys Yet?
-        </Typography>
-        <Button
-          variant="contained"
-          sx={{
-            mt: 2,
-            backgroundColor: primaryColor200,
-            borderRadius: "10px",
-            px: 3,
-            fontSize: isMobile ? "12px" : "14px",
-            py: isMobile ? "6px" : "8px",
-          }}
-          onClick={() => setOpen(true)}
-        >
-          + New Survey
-        </Button>
+      {/* Main Content */}
+      <Box sx={{ flexGrow: 1, p: 3, mt: 8 }}>
+        <Box sx={{ display: "flex", gap: 4, mt: 3 }}>
+          {["Live", "Completed"].map((option) => (
+            <Button
+              key={option}
+              onClick={() => handleOptionClick(option)}
+              disableRipple
+              sx={{
+                textTransform: "none",
+                color: selectedOption === option ? primaryColor200 : "text.secondary",
+                borderBottom: selectedOption === option ? `2px solid ${primaryColor200}` : "none",
+                borderRadius: 0,
+                padding: 0,
+                minWidth: "auto",
+                backgroundColor: "transparent",
+                "&:hover": {
+                  backgroundColor: "transparent",
+                },
+                "&:active": {
+                  backgroundColor: "transparent",
+                },
+                "&:focus": {
+                  outline: "none",
+                },
+                "&:focus-visible": {
+                  outline: "none",
+                },
+              }}
+            >
+              {option}
+            </Button>
+          ))}
+        </Box>
 
-        {/* Modal Popup */}
-        <Dialog
-          open={open}
-          onClose={() => setOpen(false)}
-          sx={{ "& .MuiDialog-paper": { padding: 3, borderRadius: "12px" } }}
-        >
-          <Box sx={{ textAlign: "center", p: 3 }}>
-            <CheckCircleIcon sx={{ color: "green", fontSize: 40, mb: 1 }} />
-            <Typography sx={{ fontWeight: "bold", mb: 2 }}>Choose your choice</Typography>
-            <Box sx={{ display: "flex", gap: 2 }}>
-              <Button variant="contained" sx={{ backgroundColor: "#7B61FF" }} onClick={() => navigate("/templates")}>
-                Templates
-              </Button>
-              <Button variant="contained" sx={{ backgroundColor: "#7B61FF" }} onClick={() => navigate("/create-new")}>
-                Create New
-              </Button>
-            </Box>
-          </Box>
-        </Dialog>
+        <Box sx={{ mt: 2 }}>
+          {selectedOption === "Live" && <Typography>Live surveys will be displayed here.</Typography>}
+          {selectedOption === "Completed" && <Typography>Completed surveys will be displayed here.</Typography>}
+        </Box>
       </Box>
     </Box>
   );
 };
 
-export default DashboardLayout;
+export default Mentor;
