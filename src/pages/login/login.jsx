@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { TextField, Button, Typography, Box, Alert, Link } from "@mui/material";
+import { TextField, Button, Typography, Box, Alert, Link, MenuItem, Select, FormControl, InputLabel } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 
 const Login = () => {
   const [formData, setFormData] = useState({
     email: "",
     password_: "", // Matches database column name
+    role: "", // New field for role
   });
 
   const [message, setMessage] = useState(null);
@@ -22,7 +23,7 @@ const Login = () => {
     e.preventDefault();
     setMessage(null);
 
-    if (!formData.email || !formData.password_) {
+    if (!formData.email || !formData.password_ || !formData.role) {
       setMessage({ type: "error", text: "❌ Please fill all fields." });
       return;
     }
@@ -35,11 +36,15 @@ const Login = () => {
         // Save the token to localStorage
         localStorage.setItem("token", res.data.token);
 
-        // Redirect based on whether the faculty has created a survey
-        if (res.data.hasCreatedSurvey) {
-          setTimeout(() => navigate("/dashboard"), 1000); // Redirect to dashboard
-        } else {
-          setTimeout(() => navigate("/dashboardnull"), 1000); // Redirect to dashboardnull
+        // Redirect based on role and whether the faculty has created a survey
+        if (formData.role === "faculty") {
+          if (res.data.hasCreatedSurvey) {
+            setTimeout(() => navigate("/dashboard"), 1000); // Redirect to dashboard
+          } else {
+            setTimeout(() => navigate("/dashboardnull"), 1000); // Redirect to dashboardnull
+          }
+        } else if (formData.role === "student") {
+          setTimeout(() => navigate("/userdashboard"), 1000); // Redirect to userdetails
         }
       } else {
         setMessage({ type: "error", text: res.data.message });
@@ -60,6 +65,19 @@ const Login = () => {
           <TextField fullWidth label="Email" name="email" value={formData.email} onChange={handleChange} margin="normal" required />
           <TextField fullWidth label="Password" name="password_" type="password" value={formData.password_} onChange={handleChange} margin="normal" required />
 
+          <FormControl fullWidth margin="normal" required>
+  <InputLabel>Role</InputLabel>
+  <Select
+    label="Role"
+    name="role"
+    value={formData.role}
+    onChange={handleChange}
+  >
+    <MenuItem value="student">Student</MenuItem>
+    <MenuItem value="faculty">Faculty</MenuItem>
+  </Select>
+</FormControl>
+
           <Button fullWidth variant="contained" color="primary" type="submit" sx={{ mt: 2 }}>
             Login
           </Button>
@@ -74,4 +92,5 @@ const Login = () => {
     </Box>
   );
 };
+
 export default Login;
