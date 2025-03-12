@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText,
-  AppBar, Toolbar, Typography, Box, CssBaseline, IconButton, InputBase,
+  AppBar, Toolbar, Typography, Box, CssBaseline, IconButton, InputBase, LinearProgress,AvatarGroup,
   Avatar, Button, useMediaQuery, useTheme, Grid, Card, CardContent, Modal,
   TextField, MenuItem, Select, FormControl, InputLabel, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper
 } from "@mui/material";
@@ -23,8 +23,10 @@ import profile3 from "../assets/profile3.jpg";
 import skillImage from "../assets/image.png";
 import RPImage from "../assets/rp.png";
 import contactImage from "../assets/contact.png";
-
-
+import user1 from "../assets/a.png";
+import user2 from "../assets/m.png";
+import user3 from "../assets/d.png";
+import PLUSICON from "../assets/PLUS.png";
 const desktopDrawerWidth = 220;
 const primaryColor200 = "#7B3DFF";
 
@@ -46,16 +48,28 @@ const DashboardCreated = () => {
   const [constraints, setConstraints] = useState({});
   const [students, setStudents] = useState([]);
   const [openResultsModal, setOpenResultsModal] = useState(false);
+  const [surveys, setSurveys] = useState([]); // Add state for surveys
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const categorizeSurvey = (survey) => {
+    const currentDate = new Date().toISOString().split("T")[0]; // Get YYYY-MM-DD format
+  
+    if (survey.end_date < currentDate) {
+      return "Completed"; // Survey has ended
+    } else if (survey.start_date > currentDate) {
+      return "Scheduled"; // Survey is in the future
+    } else {
+      return "Live"; // Survey is ongoing
+    }
+  };
+  
 
   const menuItems = [
     { text: "Dashboard", icon: <DashboardIcon />, path: "/dashboard" },
     { text: "My surveys", icon: <DescriptionIcon />, path: "/survey" },
     { text: "Mentoring", icon: <GroupIcon />, path: "/mentor" },
   ];
-
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
@@ -139,17 +153,32 @@ const DashboardCreated = () => {
       (!selectedYear || student.Year === selectedYear) &&
       (!selectedDepartment || student.Department === selectedDepartment)
   );
-  const handleSeeResults = async () => {
-    try {
-      const requestBody = { selectedLevels, selectedRole, startRange, endRange };
-      console.log("Sending request body:", requestBody);
+        
+  
 
-      const response = await fetch('http://localhost:3000/students', {
-        method: 'POST',
+  useEffect(() => {
+    if (selectedOption === "Live") {
+      fetchSurveys();
+    }
+    else if (selectedOption === "Completed") {
+      fetchCompletedSurveys();
+    }
+    else if(selectedOption==="Scheduled"){
+      fetchScheduledSurveys();
+    }
+    else if (selectedOption === "All surveys") {
+      fetchAllSurveys();
+    }
+  }, [selectedOption]);
+
+  const fetchSurveys = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch("http://localhost:3000/get-surveys", {
+        method: "GET",
         headers: {
-          'Content-Type': 'application/json',
+          Authorization: token,
         },
-        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
@@ -157,14 +186,90 @@ const DashboardCreated = () => {
       }
 
       const data = await response.json();
-      console.log("Data received from API:", data);
-      setStudents(data);
-      setOpenResultsModal(true); // Open the results modal
+      setSurveys(data); // Set the fetched surveys to state
     } catch (error) {
-      console.error('Error fetching students:', error);
+      console.error("Error fetching surveys:", error);
+    }
+  };
+  const fetchCompletedSurveys = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch("http://localhost:3000/get-completed-surveys", {
+        method: "GET",
+        headers: {
+          Authorization: token,
+        },
+      });
+  
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+  
+      const data = await response.json();
+      setSurveys(data);
+    } catch (error) {
+      console.error("Error fetching completed surveys:", error);
+    }
+  };
+  const fetchScheduledSurveys = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch("http://localhost:3000/get-scheduled-surveys", {
+        method: "GET",
+        headers: {
+          Authorization: token,
+        },
+      });
+  
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+  
+      const data = await response.json();
+      setSurveys(data);
+    } catch (error) {
+      console.error("Error fetching completed surveys:", error);
+    }
+  };
+  const fetchAllSurveys = async () => {
+    try {
+      const token = localStorage.getItem("token");
+  
+      // Fetch all surveys concurrently
+      const [liveSurveys, completedSurveys, scheduledSurveys] = await Promise.all([
+        fetch("http://localhost:3000/get-surveys", {
+          method: "GET",
+          headers: {
+            Authorization: token,
+          },
+        }).then(response => response.json()),
+        
+        fetch("http://localhost:3000/get-completed-surveys", {
+          method: "GET",
+          headers: {
+            Authorization: token,
+          },
+        }).then(response => response.json()),
+        
+        fetch("http://localhost:3000/get-scheduled-surveys", {
+          method: "GET",
+          headers: {
+            Authorization: token,
+          },
+        }).then(response => response.json()),
+      ]);
+  
+      // Merge the results
+      const mergedSurveys = [...liveSurveys, ...completedSurveys, ...scheduledSurveys];
+  
+      // Set the merged surveys to state
+      setSurveys(mergedSurveys);
+    } catch (error) {
+      console.error("Error fetching all surveys:", error);
     }
   };
 
+  
   const handleCloseResultsModal = () => {
     setOpenResultsModal(false);
   };
@@ -432,16 +537,114 @@ const DashboardCreated = () => {
         </Box>
 
         <Box sx={{ mt: 2 }}>
-          {selectedOption === "Live" && <Typography>Live surveys will be displayed here.</Typography>}
-          {selectedOption === "Scheduled" && <Typography>Scheduled surveys will be displayed here.</Typography>}
+        {(selectedOption === "Live" || selectedOption === "Completed" || selectedOption === "Scheduled" || selectedOption === "All surveys") && (
+  <Grid container spacing={2}>
+    {surveys.map((survey, index) => (
+      <Grid item xs={12} md={4} key={index}>
+        <Card
+          sx={{
+            backgroundColor: "#F5F8FE",
+            cursor: "pointer",
+            "&:hover": { boxShadow: 3 },
+            borderRadius: "10px",
+            position: "relative" // Ensures proper positioning of the status label
+          }}
+        >
+          <CardContent>
+            {/* Start Date */}
+            <Typography variant="h6" gutterBottom sx={{ fontSize: "16px", color: "#4A4A4A" }}>
+              {new Date(survey.start_date).toISOString().split("T")[0]}
+            </Typography>
+
+            {/* Survey Title */}
+            <Typography variant="h6" gutterBottom sx={{ fontSize: "14px", color: "#27104E", fontWeight: 600 }}>
+              {survey.survey_title}
+            </Typography>
+
+            {/* Faculty Name (Extracted from Email) */}
+            <Typography variant="h6" gutterBottom sx={{ fontSize: "16px", color: "#27104E" }}>
+              {survey.staff_email.split(".")[0].toUpperCase()}
+            </Typography>
+
+            {/* Progress Bar */}
+            <Box sx={{ mt: 1, width: "100%" }}>
+              <LinearProgress
+                variant="determinate"
+                value={categorizeSurvey(survey) === "Completed" ? 100 : 0}
+                sx={{ height: 6, borderRadius: 3, backgroundColor: "#E0E0E0", "& .MuiLinearProgress-bar": { backgroundColor: "#1FC16B" } }}
+              />
+            </Box>
+
+            {/* Progress Text */}
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", mt: 1 }}>
+              <Typography variant="body2" sx={{ color: "#27104E", fontSize: "12px" }}>
+                Progress
+              </Typography>
+              <Typography variant="body2" sx={{ color: "#27104E", fontSize: "12px" }}>
+                {categorizeSurvey(survey) === "Completed" ? "100%" : "0%"}
+              </Typography>
+            </Box>
+            {(categorizeSurvey(survey) === "Completed" || categorizeSurvey(survey) === "Scheduled") && <br />}
+
+
+            {/* ✅ Show AvatarGroup ONLY for Live Surveys */}
+            {categorizeSurvey(survey) === "Live" && (
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", mt: 1 }}>
+                <Box sx={{ display: "flex", alignItems: "center" }}>
+                  <AvatarGroup max={4} sx={{ '& .MuiAvatar-root': { width: 20, height: 20, fontSize: 12 } }}>
+                    <Avatar alt="User 1" src={user1} /> 
+                    <Avatar alt="User 2" src={user2} /> 
+                    <Avatar alt="User 3" src={user3} /> 
+                    <Avatar alt="User 4" src={PLUSICON} /> 
+                  </AvatarGroup>
+                  <Typography variant="body2" sx={{ color: "#E26001", fontWeight: "bold", ml: 1, fontSize: "12px" }}>
+                    + responses
+                  </Typography>
+                </Box>
+              </Box>
+            )}
+          </CardContent>
+
+          {/* 📌 Status Label Positioned at Bottom Right */}
+          <Box
+            sx={{
+              position: "absolute",
+              bottom: 10,
+              right: 10,
+              border: "1px solid",
+              borderColor: categorizeSurvey(survey) === "Live" ? "#E26001" : categorizeSurvey(survey) === "Completed" ? "#1FC16B" : "#C13B06",
+              borderRadius: "16px",
+              padding: "2px 8px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: "transparent",
+              minWidth: "auto"
+            }}
+          >
+            <Typography
+              variant="body2"
+              sx={{
+                color: "#5A5A5A",
+                fontSize: "12px",
+                fontWeight: "bold"
+              }}
+            >
+              {categorizeSurvey(survey) === "Live" ? "In Live" : categorizeSurvey(survey)}
+            </Typography>
+          </Box>
+        </Card>
+      </Grid>
+    ))}
+  </Grid>
+)}
+
+
+
           {selectedOption === "Draft" && <Typography>Draft surveys will be displayed here.</Typography>}
-          {selectedOption === "All surveys" && <Typography>All surveys will be displayed here.</Typography>}
-          {selectedOption === "Completed" && <Typography>Completed surveys will be displayed here.</Typography>}
           {selectedOption === "Group surveys" && <Typography>Group surveys will be displayed here.</Typography>}
         </Box>
       </Box>
-
-      {/* Group Creation Modal */}
       <Modal
         open={openGroupModal}
         onClose={handleCloseGroupModal}
@@ -988,6 +1191,7 @@ const DashboardCreated = () => {
     </Modal>
   
 
+      {/* Rest of your existing code... */}
     </Box>
   );
 };
