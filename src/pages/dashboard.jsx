@@ -233,41 +233,24 @@ const DashboardCreated = () => {
   };
   const fetchAllSurveys = async () => {
     try {
-      const token = localStorage.getItem("token");
-  
-      // Fetch all surveys concurrently
-      const [liveSurveys, completedSurveys, scheduledSurveys] = await Promise.all([
-        fetch("http://localhost:3000/get-surveys", {
-          method: "GET",
-          headers: {
-            Authorization: token,
-          },
-        }).then(response => response.json()),
-        
-        fetch("http://localhost:3000/get-completed-surveys", {
-          method: "GET",
-          headers: {
-            Authorization: token,
-          },
-        }).then(response => response.json()),
-        
-        fetch("http://localhost:3000/get-scheduled-surveys", {
-          method: "GET",
-          headers: {
-            Authorization: token,
-          },
-        }).then(response => response.json()),
-      ]);
-  
-      // Merge the results
-      const mergedSurveys = [...liveSurveys, ...completedSurveys, ...scheduledSurveys];
-  
-      // Set the merged surveys to state
-      setSurveys(mergedSurveys);
+        const [live, completed, scheduled] = await Promise.all([
+            fetchSurveys(),
+            fetchCompletedSurveys(),
+            fetchScheduledSurveys(),
+        ]);
+
+        console.log("Live Surveys:", live);
+        console.log("Completed Surveys:", completed);
+        console.log("Scheduled Surveys:", scheduled);
+
+        const mergedSurveys = [...live, ...completed, ...scheduled];
+        console.log("Merged Surveys:", mergedSurveys); // ✅ Debugging all surveys together
+
+        setSurveys(mergedSurveys);
     } catch (error) {
-      console.error("Error fetching all surveys:", error);
+        console.error("Error fetching all surveys:", error);
     }
-  };
+};
 
   
   const handleCloseResultsModal = () => {
@@ -642,6 +625,7 @@ const DashboardCreated = () => {
 
 
           {selectedOption === "Draft" && <Typography>Draft surveys will be displayed here.</Typography>}
+          {selectedOption === "All surveys" && <Typography>All surveys will be displayed here.</Typography>}
           {selectedOption === "Group surveys" && <Typography>Group surveys will be displayed here.</Typography>}
         </Box>
       </Box>
