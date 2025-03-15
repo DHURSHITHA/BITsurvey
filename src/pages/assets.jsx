@@ -18,6 +18,9 @@ import Bag from "../assets/baaag.png";
 import FeedbackForm from "./Feedbackform";
 import AcademicFeedbackForm from "./academicfb";
 import DashboardCreated from "./dashboard";
+import School from "../assets/School.png";
+import Skill from "../assets/settings_account_box.png";
+import Logo from "../assets/logo (1).png";
 const desktopDrawerWidth = 220;
 const primaryColor200 = "#7B3DFF";
 
@@ -47,8 +50,13 @@ const AssetsDict = () => {
     <Box sx={{ height: "100vh", background: "#fff", color: "#000", p: 2 }}>
       <Typography
         variant="h6"
-        sx={{ fontWeight: "bold", color: primaryColor200, mb: 2, fontFamily: "Poppins, sans-serif" }}
+        sx={{ fontWeight: "bold", color: primaryColor200, mb: 2, fontFamily: "Poppins, sans-serif", display: "flex", alignItems: "center" }}
       >
+        <img
+          src={Logo}
+          alt="Logo"
+          style={{ width: "20px", height: "19px", marginRight: "8px" }} // Add margin to the right of the image
+        />
         BIT SURVEY
       </Typography>
       <List>
@@ -176,12 +184,24 @@ const AssetsDict = () => {
           <Grid item xs={12} md={4}>
             <Card sx={{ height: "100%", display: "flex", flexDirection: "column",backgroundColor:"#F5F8FE" }}>
               <CardContent sx={{ flexGrow: 1 }}>
-              <Typography variant="h6" gutterBottom style={{ fontWeight: 'bold' }}>
-                Assets
-                </Typography>
-                <Typography variant="body1">
-                  This template allows users to create structured product-related survey questions efficiently. It includes predefined question formats.
-                </Typography>
+              
+  <img
+    src={School}
+    alt="Logo"
+    style={{ width: "20px", height: "20px" }} // Adjust size as needed
+  />
+  <Typography
+  variant="h6"
+  gutterBottom
+  style={{ fontWeight: "bold", display: "flex", alignItems: "center", gap: "8px" }} // Add flex and gap
+>
+  Assets
+</Typography>
+
+<Typography variant="body1">
+  This template allows users to create structured product-related survey questions efficiently. It includes predefined question formats.
+</Typography>
+
               </CardContent>
               <Box sx={{ p: 2 }}>
               <Button 
@@ -206,12 +226,19 @@ const AssetsDict = () => {
           <Grid item xs={12} md={4}>
             <Card sx={{ height: "100%", display: "flex", flexDirection: "column",backgroundColor:"#F5F8FE" }}>
               <CardContent sx={{ flexGrow: 1 }}>
+              <img
+    src={Skill}
+    alt="Logo"
+    style={{ width: "20px", height: "20px" }} // Adjust size as needed
+  />
               <Typography variant="h6" gutterBottom style={{ fontWeight: 'bold' }}>
                 Skill Feedback
                 </Typography>
                 <Typography variant="body1">
                   Gather valuable insights to enhance the academic experience through targeted feedback from students and faculty.
                 </Typography>
+               
+
               </CardContent>
               <Box sx={{ p: 2 }}>
               <Button 
@@ -239,6 +266,11 @@ const AssetsDict = () => {
           <Grid item xs={12} md={4}>
             <Card sx={{ height: "100%", display: "flex", flexDirection: "column" ,backgroundColor:"#F5F8FE"}}>
               <CardContent sx={{ flexGrow: 1 }}>
+              <img
+    src={School}
+    alt="Logo"
+    style={{ width: "20px", height: "20px" }} // Adjust size as needed
+  />
               <Typography variant="h6" gutterBottom style={{ fontWeight: 'bold' }}>
                 Academic Feedback
                 </Typography>
