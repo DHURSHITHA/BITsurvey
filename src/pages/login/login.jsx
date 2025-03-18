@@ -32,8 +32,11 @@ const Login = () => {
       const res = await axios.post("http://localhost:3000/login", formData);
       if (res.data.success) {
         setMessage({ type: "success", text: "✅ Login successful! Redirecting..." });
+        localStorage.setItem("staffEmail", res.data.staffEmail);
+
 
         // Save the token to localStorage
+       
         localStorage.setItem("token", res.data.token);
 
         // Redirect based on role and whether the faculty has created a survey

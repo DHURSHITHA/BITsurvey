@@ -135,37 +135,41 @@ const SurveyCreation = () => {
     });
   };
 
-  const handleFinishSurvey = async () => {
+  const handleFinishSurvey = async (isDraft = false) => {
     try {
-      const token = localStorage.getItem("token");
-      const payload = {
-        survey_id: surveyId,
-        questions: questions,
-        surveyTitle, // Include surveyTitle in the payload
-      };
-      const response = await axios.post(
-        "http://localhost:3000/save-survey",
-        payload,
-        {
-          headers: {
-            Authorization: token,
-          },
+        const token = localStorage.getItem("token");
+        const payload = {
+            survey_id: surveyId,
+            questions: questions,
+            surveyTitle,
+            draft: isDraft ? "draft" : null,  // Ensuring null is set when isDraft is false
+        };
+
+        console.log("Payload before sending:", payload); // Debugging log
+
+        const response = await axios.post(
+            "http://localhost:3000/save-survey",
+            payload,
+            {
+                headers: {
+                    Authorization: token,
+                },
+            }
+        );
+
+        if (response.status === 200) {
+            const survey_id = response.data.survey_id;
+            setPermissionData((prev) => ({ ...prev, survey_id, surveyTitle }));
+            setOpenDialog(true);
+            alert(isDraft ? "Survey saved as draft!" : "Survey saved successfully!");
         }
-      );
-
-      if (response.status === 200) {
-        const survey_id = response.data.survey_id;
-        setPermissionData((prev) => ({ ...prev, survey_id, surveyTitle })); // Update permissionData with surveyTitle
-        setOpenDialog(true);
-        alert("Survey saved successfully!");
-      }
     } catch (error) {
-      console.error("Error saving survey:", error);
-      alert("Failed to save survey.");
+        console.error("Error saving survey:", error);
+        alert("Failed to save survey.");
     }
-  };
+};
 
-  const handleSaveBulkOptions = () => {
+    const handleSaveBulkOptions = () => {
     const newOptions = bulkText.split("\n").filter((line) => line.trim() !== "");
     setQuestions((prev) =>
       prev.map((q, i) =>
@@ -175,7 +179,6 @@ const SurveyCreation = () => {
     setBulkDialogOpen(false);
     setBulkText("");
   };
-
   const handleAddParsedQuestions = () => {
     const questionBlocks = inputText.split("\n\n");
     const parsedQuestions = questionBlocks.map((block, index) => {
@@ -302,45 +305,54 @@ return (
         />
         {questions.map((question, qIndex) => (
           <div key={qIndex} style={{ border: "1px solid #ddd", borderRadius: "10px", padding: "20px", backgroundColor: "#fff", marginBottom: "20px" }}>
-            <div>
-              <Button
-                variant="text"
-                style={{
-                  color: "black",
-                  textTransform: "none",
-                  fontSize: "14px",
-                  fontWeight: "bold",
-                  borderBottom: activePage === "edit" ? "1.5px solid red" : "none",
-                  paddingBottom: "2px",
-                  outline: "none",
-                }}
-                onClick={() => {
-                  setActivePage("edit");
-                  setQuestions((prev) => prev.map((q, i) => (i === qIndex ? { ...q, showOptions: false } : q)));
-                }}
-              >
-                EDIT
-              </Button>
-              <Button
-                variant="text"
-                style={{
-                  color: "black",
-                  textTransform: "none",
-                  fontSize: "14px",
-                  fontWeight: "bold",
-                  marginLeft: "10px",
-                  borderBottom: activePage === "options" ? "1.5px solid red" : "none",
-                  paddingBottom: "2px",
-                  outline: "none",
-                }}
-                onClick={() => {
-                  setActivePage("options");
-                  handleToggleOptions(qIndex);
-                }}
-              >
-                OPTIONS
-              </Button>
-            </div>
+           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+  <div>
+    <Button
+      variant="text"
+      style={{
+        color: "black",
+        textTransform: "none",
+        fontSize: "14px",
+        fontWeight: "bold",
+        borderBottom: activePage === "edit" ? "1.5px solid red" : "none",
+        paddingBottom: "2px",
+        outline: "none",
+      }}
+      onClick={() => {
+        setActivePage("edit");
+        setQuestions((prev) => prev.map((q, i) => (i === qIndex ? { ...q, showOptions: false } : q)));
+      }}
+    >
+      EDIT
+    </Button>
+    <Button
+      variant="text"
+      style={{
+        color: "black",
+        textTransform: "none",
+        fontSize: "14px",
+        fontWeight: "bold",
+        marginLeft: "10px",
+        borderBottom: activePage === "options" ? "1.5px solid red" : "none",
+        paddingBottom: "2px",
+        outline: "none",
+      }}
+      onClick={() => {
+        setActivePage("options");
+        handleToggleOptions(qIndex);
+      }}
+    >
+      OPTIONS
+    </Button>
+  </div>
+  <Button
+  variant="contained"
+  style={{ backgroundColor: "#6a4bbc", color: "white" }}
+  onClick={() => handleFinishSurvey(true)} // Pass true for draft
+>
+  Draft
+</Button>
+</div>
             {question.showOptions && (
               <div style={{ marginTop: "10px" }}>
                 <FormControlLabel
@@ -517,7 +529,13 @@ return (
           <Button variant="contained" style={{ backgroundColor: "#6a4bbc", color: "white" }} onClick={handleAddQuestion}>+ Next Question</Button>
           <div>
             <Button variant="outlined" style={{ marginRight: "10px", borderColor: "#6a4bbc", color: "#6a4bbc" }}>Cancel</Button>
-            <Button variant="contained" style={{ backgroundColor: "#6a4bbc", color: "white" }} onClick={handleFinishSurvey}>Finish Survey</Button>
+            <Button
+  variant="contained"
+  style={{ backgroundColor: "#6a4bbc", color: "white" }}
+  onClick={() => handleFinishSurvey(false)} // Pass false for final submission
+>
+  Finish Survey
+</Button>
           </div>
         </div>
         <br />
