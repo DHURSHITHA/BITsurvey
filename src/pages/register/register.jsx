@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { TextField, Button, Typography, Box, Alert, Link, MenuItem } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import Logo from "../../assets/logo (1).png";
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -47,7 +48,13 @@ const Register = () => {
   return (
     <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", width: "100vw" }}>
       <Box sx={{ width: 400, padding: 4, boxShadow: 3, borderRadius: 2, bgcolor: "background.paper", textAlign: "center" }}>
-        <Typography variant="h5">Register</Typography>
+        
+      <Typography
+  variant="h5"
+  sx={{ color: "#7B3DFF", fontWeight: "bold" }} // Use fontWeight instead of fontweight
+>
+  Register
+</Typography>
         {message && <Alert severity={message.type} sx={{ mt: 2 }}>{message.text}</Alert>}
 
         <form onSubmit={handleSubmit}>
@@ -62,10 +69,21 @@ const Register = () => {
           </TextField>
 
           <TextField fullWidth label="Password" name="password_" type="password" value={formData.password_} onChange={handleChange} margin="normal" required />
-
-          <Button fullWidth variant="contained" color="primary" type="submit" sx={{ mt: 2 }}>
-            Register
-          </Button>
+          
+         <Button
+           fullWidth
+           variant="contained"
+           type="submit"
+           sx={{
+             mt: 2,
+             backgroundColor: "#7B3DFF", // Custom background color
+             "&:hover": {
+               backgroundColor: "#5E2DB3", // Optional: Custom hover color
+             },
+           }}
+         >
+           Register
+         </Button>
         </form>
 
         {/* Login Link */}

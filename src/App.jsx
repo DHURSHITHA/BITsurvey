@@ -14,7 +14,7 @@ import MySurvey from "./pages/survey";
 import User from "./pages/userdashboard";
 import Mentor from "./pages/mentor";
 import StudentForm from "./pages/user-details";
-import Sidebar from "./pages/Sidebar";
+// import Sidebar from "./pages/Sidebar";
 function App() {
   return (
     <BrowserRouter>
@@ -37,7 +37,7 @@ function App() {
         <Route path="/producttemplate" element={<EditableTable />} />
         <Route path="/userdashboard" element={<User />} />
         <Route path="/user-details" element={<StudentForm />} />
-        <Route path="/Sidebar" element={<Sidebar />} />
+        {/* <Route path="/Sidebar" element={<Sidebar />} /> */}
 
       </Routes>
     </BrowserRouter>

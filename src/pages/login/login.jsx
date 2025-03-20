@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import axios from "axios";
 import { TextField, Button, Typography, Box, Alert, Link, MenuItem, Select, FormControl, InputLabel } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-
+import Logo from "../../assets/logo (1).png";
+const primaryColor200 = "#7B3DFF";
 const Login = () => {
   const [formData, setFormData] = useState({
     email: "",
@@ -35,11 +36,11 @@ const Login = () => {
         localStorage.setItem("staffEmail", res.data.staffEmail);
 
 
-        // Save the token to localStorage
+
        
         localStorage.setItem("token", res.data.token);
 
-        // Redirect based on role and whether the faculty has created a survey
+        
         if (formData.role === "faculty") {
           if (res.data.hasCreatedSurvey) {
             setTimeout(() => navigate("/dashboard"), 1000); // Redirect to dashboard
@@ -61,7 +62,18 @@ const Login = () => {
   return (
     <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", width: "100vw" }}>
       <Box sx={{ width: 400, padding: 4, boxShadow: 3, borderRadius: 2, bgcolor: "background.paper", textAlign: "center" }}>
-        <Typography variant="h5">Login</Typography>
+        <Typography
+                variant="h6"
+                sx={{ ml:"110px",fontWeight: "bold", color: primaryColor200, mb: 2, fontFamily: "Poppins, sans-serif", display: "flex", alignItems: "center" }}
+              >
+                <img
+                  src={Logo}
+                  alt="Logo"
+                  style={{ width: "20px", height: "19px", marginRight: "8px" }}
+                />
+                BIT SURVEY
+              </Typography>
+        {/* <Typography variant="h5">BIT SURVEY</Typography> */}
         {message && <Alert severity={message.type} sx={{ mt: 2 }}>{message.text}</Alert>}
 
         <form onSubmit={handleSubmit}>
@@ -81,9 +93,20 @@ const Login = () => {
   </Select>
 </FormControl>
 
-          <Button fullWidth variant="contained" color="primary" type="submit" sx={{ mt: 2 }}>
-            Login
-          </Button>
+<Button
+  fullWidth
+  variant="contained"
+  type="submit"
+  sx={{
+    mt: 2,
+    backgroundColor: "#7B3DFF", // Custom background color
+    "&:hover": {
+      backgroundColor: "#5E2DB3", // Optional: Custom hover color
+    },
+  }}
+>
+  Login
+</Button>
         </form>
 
         {/* Register Link */}

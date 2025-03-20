@@ -52,9 +52,14 @@ const DashboardCreated = () => {
   const [openResultsModal, setOpenResultsModal] = useState(false);
   const [surveys, setSurveys] = useState([]);
   const [draftSurveys, setDraftSurveys] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
+  const handleViewDraft = (survey_id) => {
+    navigate("/create-survey", { state: { draftSurveyId: survey_id } });
+  };
 
   const categorizeSurvey = (survey) => {
     const currentDateTime = new Date();
@@ -62,7 +67,7 @@ const DashboardCreated = () => {
       console.error("❌ Missing or invalid date/time values:", survey);
       return "Invalid Data";
     }
-
+    
     const utcDate = survey.start_date;
     const startDateISO = new Date(utcDate).toLocaleDateString('en-CA');
     const utcDate2 = survey.end_date;
@@ -81,6 +86,10 @@ const DashboardCreated = () => {
     if (currentDate < startDateISO) {
       return "Scheduled";
     }
+    if(startDateISO===currentDate && currentTime<startTime)
+    {
+      return "Scheduled";
+    }
 
     if (startDateISO === endDateISO) {
       if (currentTime >= startTime && currentTime <= endTime) {
@@ -96,7 +105,7 @@ const DashboardCreated = () => {
       return "Live";
     }
 
-    return "Invalid Data";
+    return { category: "Invalid Data", startDateISO: "Invalid Date" };
   };
 
   const menuItems = [
@@ -198,32 +207,9 @@ const DashboardCreated = () => {
       fetchScheduledSurveys();
     } else if (selectedOption === "All surveys") {
       fetchAllSurveys();
-    } else if (selectedOption === "Draft") {
-      fetchDraftSurveys();
     }
   }, [selectedOption]);
-  
 
-  const fetchDraftSurveys = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const response = await fetch("http://localhost:3000/get-drafts", {
-        method: "GET",
-        headers: {
-          Authorization: token,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      setDraftSurveys(data);
-    } catch (error) {
-      console.error("Error fetching draft surveys:", error);
-    }
-  };
 
   const fetchSurveys = async () => {
     try {
@@ -377,6 +363,16 @@ const DashboardCreated = () => {
     }
   };
 
+  const highlightText = (text, highlight) => {
+    if (!highlight.trim()) {
+      return text;
+    }
+    const regex = new RegExp(`(${highlight})`, "gi");
+    return text.split(regex).map((part, index) =>
+      regex.test(part) ? <span key={index} style={{ backgroundColor: "yellow" }}>{part}</span> : part
+    );
+  };
+
   const drawer = (
     <Box sx={{ height: "100vh", background: "#fff", color: "#000", p: 2 }}>
       <Typography
@@ -423,54 +419,29 @@ const DashboardCreated = () => {
       </Box>
     </Box>
   );
-  // const handleCreateGroup = async () => {
-  //   if (!groupName.trim()) {
-  //     alert("Please enter a group name.");
-  //     return;
-  //   }
-  
-  //   try {
-  //     const response = await fetch("http://localhost:5000/creategroup", {
-  //       method: "POST",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //       },
-  //       body: JSON.stringify({ groupName, students }),
-  //     });
-  
-  //     if (!response.ok) {
-  //       throw new Error("Failed to create group");
-  //     }
-  
-  //     alert("Group created successfully!");
-  //   } catch (error) {
-  //     console.error("Error creating group:", error);
-  //   }
-  // };
-  
+
   const handleCreateGroup = async () => {
     const staffemail = localStorage.getItem("staffEmail"); // Retrieve stored email
     if (!groupName.trim() || students.length === 0) {
       alert("Please enter a group name and select students.");
       return;
     }
-  
+
     try {
       const response = await fetch("http://localhost:3000/creategroup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ groupName, students, staffemail }), // Include staffemail
       });
-  
+
       if (!response.ok) throw new Error("Failed to create group");
-  
+
       alert("Group created successfully!");
     } catch (error) {
       console.error("Error creating group:", error);
     }
   };
-  
-  
+
   return (
     <Box sx={{ display: "flex", height: "100vh", width: "100vw", backgroundColor: "#fff" }}>
       <CssBaseline />
@@ -511,6 +482,8 @@ const DashboardCreated = () => {
             <InputBase
               placeholder="Search..."
               sx={{ flex: 1, fontSize: "14px" }}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
           </Box>
 
@@ -570,10 +543,10 @@ const DashboardCreated = () => {
                     style={{ width: "auto", height: "70px" }}
                   />
                   <Typography variant="h6" gutterBottom>
-                    Create Survey
+                    {highlightText("Create Survey", searchQuery)}
                     <br />
                     <span style={{ fontSize: "0.875rem", color: "grey" }}>
-                      Explore new paths
+                      {highlightText("Explore new paths", searchQuery)}
                     </span>
                   </Typography>
                 </Box>
@@ -598,10 +571,10 @@ const DashboardCreated = () => {
                     style={{ width: "auto", height: "70px" }}
                   />
                   <Typography variant="h6" gutterBottom>
-                    Templates
+                    {highlightText("Templates", searchQuery)}
                     <br />
                     <span style={{ fontSize: "0.875rem", color: "grey" }}>
-                      Create from existing
+                      {highlightText("Create from existing", searchQuery)}
                     </span>
                   </Typography>
                 </Box>
@@ -626,10 +599,10 @@ const DashboardCreated = () => {
                     style={{ width: "auto", height: "70px" }}
                   />
                   <Typography variant="h6" gutterBottom>
-                    Create Groups
+                    {highlightText("Create Groups", searchQuery)}
                     <br />
                     <span style={{ fontSize: "0.875rem", color: "grey" }}>
-                      Add members
+                      {highlightText("Add members", searchQuery)}
                     </span>
                   </Typography>
                 </Box>
@@ -639,7 +612,7 @@ const DashboardCreated = () => {
         </Grid>
 
         <Box sx={{ display: "flex", gap: 4, mt: 3 }}>
-          {["Live", "Scheduled", "Draft", "All surveys", "Completed", "Group surveys"].map((option) => (
+          {["Live", "Scheduled","All surveys", "Completed", "Group surveys"].map((option) => (
             <Button
               key={option}
               onClick={() => handleOptionClick(option)}
@@ -666,187 +639,118 @@ const DashboardCreated = () => {
                 },
               }}
             >
-              {option}
+              {highlightText(option, searchQuery)}
             </Button>
           ))}
         </Box>
 
         <Box sx={{ mt: 2 }}>
-         
           {(selectedOption === "Live" || selectedOption === "Completed" || selectedOption === "Scheduled" || selectedOption === "All surveys") && (
+            
             <Grid container spacing={2}>
-              {surveys.map((survey, index) => (
-                <Grid item xs={12} md={4} key={index}>
-                  <Card
-                    sx={{
-                      backgroundColor: "#F5F8FE",
-                      cursor: "pointer",
-                      "&:hover": { boxShadow: 3 },
-                      borderRadius: "10px",
-                      position: "relative",
-                    }}
-                  >
-                    <CardContent>
-                      <Typography variant="h6" gutterBottom sx={{ fontSize: "16px", color: "#4A4A4A" }}>
-                        {new Date(survey.start_date).toISOString().split("T")[0]}
-                      </Typography>
+           {surveys.map((survey, index) => {
+  // Define startDateISO before returning JSX
+  const startDateISO = new Date(survey.start_date).toLocaleDateString('en-CA');
 
-                      <Typography variant="h6" gutterBottom sx={{ fontSize: "14px", color: "#27104E", fontWeight: 600 }}>
-                        {survey.survey_title}
-                      </Typography>
+  return (
+    <Grid item xs={12} md={4} key={index}>
+      <Card
+        sx={{
+          backgroundColor: "#F5F8FE",
+          cursor: "pointer",
+          "&:hover": { boxShadow: 3 },
+          borderRadius: "10px",
+          position: "relative",
+        }}
+      >
+        <CardContent>
+          <Typography variant="h6" gutterBottom sx={{ fontSize: "16px", color: "#4A4A4A" }}>
+            {highlightText(startDateISO, searchQuery)}  {/* Now startDateISO is accessible */}
+          </Typography>
 
-                      <Typography variant="h6" gutterBottom sx={{ fontSize: "16px", color: "#27104E" }}>
-                        {survey.staff_email.split(".")[0].toUpperCase()}
-                      </Typography>
+          <Typography variant="h6" gutterBottom sx={{ fontSize: "14px", color: "#27104E", fontWeight: 600 }}>
+            {highlightText(survey.survey_title, searchQuery)}
+          </Typography>
 
-                      <Box sx={{ mt: 1, width: "100%" }}>
-                        <LinearProgress
-                          variant="determinate"
-                          value={categorizeSurvey(survey) === "Completed" ? 100 : 0}
-                          sx={{ height: 6, borderRadius: 3, backgroundColor: "#E0E0E0", "& .MuiLinearProgress-bar": { backgroundColor: "#1FC16B" } }}
-                        />
-                      </Box>
+          <Typography variant="h6" gutterBottom sx={{ fontSize: "16px", color: "#27104E" }}>
+            {highlightText(survey.staff_email.split(".")[0].toUpperCase(), searchQuery)}
+          </Typography>
 
-                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", mt: 1 }}>
-                        <Typography variant="body2" sx={{ color: "#27104E", fontSize: "12px" }}>
-                          Progress
-                        </Typography>
-                        <Typography variant="body2" sx={{ color: "#27104E", fontSize: "12px" }}>
-                          {categorizeSurvey(survey) === "Completed" ? "100%" : "0%"}
-                        </Typography>
-                      </Box>
-                      {(categorizeSurvey(survey) === "Completed" || categorizeSurvey(survey) === "Scheduled") && <br />}
-
-                      {categorizeSurvey(survey) === "Live" && (
-                        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", mt: 1 }}>
-                          <Box sx={{ display: "flex", alignItems: "center" }}>
-                            <AvatarGroup max={4} sx={{ '& .MuiAvatar-root': { width: 20, height: 20, fontSize: 12 } }}>
-                              <Avatar alt="User 1" src={user1} />
-                              <Avatar alt="User 2" src={user2} />
-                              <Avatar alt="User 3" src={user3} />
-                              <Avatar alt="User 4" src={PLUSICON} />
-                            </AvatarGroup>
-                            <Typography variant="body2" sx={{ color: "#E26001", fontWeight: "bold", ml: 1, fontSize: "12px" }}>
-                              + responses
-                            </Typography>
-                          </Box>
-                        </Box>
-                      )}
-                    </CardContent>
-
-                    <Box
-                      sx={{
-                        position: "absolute",
-                        bottom: 10,
-                        right: 10,
-                        border: "1px solid",
-                        borderColor: categorizeSurvey(survey) === "Live" ? "#E26001" : categorizeSurvey(survey) === "Completed" ? "#1FC16B" : "#C13B06",
-                        borderRadius: "16px",
-                        padding: "2px 8px",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        backgroundColor: "transparent",
-                        minWidth: "auto",
-                      }}
-                    >
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          color: "#5A5A5A",
-                          fontSize: "12px",
-                          fontWeight: "bold",
-                        }}
-                      >
-                        {categorizeSurvey(survey) === "Live" ? "In Live" : categorizeSurvey(survey)}
-                      </Typography>
-                    </Box>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
-          )}
-
-          {selectedOption === "Draft" && (
-  <Grid container spacing={2}>
-    {draftSurveys.map((survey, index) => (
-      <Grid item xs={12} md={4} key={index}>
-        <Card
-          sx={{
-            backgroundColor: "#F5F8FE",
-            cursor: "pointer",
-            "&:hover": { boxShadow: 3 },
-            borderRadius: "10px",
-            position: "relative",
-          }}
-        >
-          <CardContent>
-            <Typography variant="h6" gutterBottom sx={{ fontSize: "16px", color: "#4A4A4A" }}>
-              {survey.survey_name}
-            </Typography>
-
-            <Typography variant="h6" gutterBottom sx={{ fontSize: "14px", color: "#27104E", fontWeight: 600 }}>
-              {survey.survey_title}
-            </Typography>
-
-            <Typography variant="h6" gutterBottom sx={{ fontSize: "16px", color: "#27104E" }}>
-              {survey.staff_email.split(".")[0].toUpperCase()}
-            </Typography>
-
-            <Box sx={{ mt: 1, width: "100%" }}>
-              <LinearProgress
-                variant="determinate"
-                value={0}
-                sx={{ height: 6, borderRadius: 3, backgroundColor: "#E0E0E0", "& .MuiLinearProgress-bar": { backgroundColor: "#1FC16B" } }}
-              />
-            </Box>
-
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", mt: 1 }}>
-              <Typography variant="body2" sx={{ color: "#27104E", fontSize: "12px" }}>
-                Progress
-              </Typography>
-              <Typography variant="body2" sx={{ color: "#27104E", fontSize: "12px" }}>
-                0%
-              </Typography>
-            </Box>
-          </CardContent>
-          <br></br>
-
-          {/* Updated "VIEW" Button */}
-          <Box
-            sx={{
-              position: "absolute",
-              bottom: 10,
-              right: 10,
-              backgroundColor: "#1FC16B", // Green background
-              borderRadius: "4px",
-              padding: "4px 12px", // Adjusted padding
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              minWidth: "auto",
-              cursor: "pointer", // Add pointer cursor
-              "&:hover": {
-                backgroundColor: "#17A05B", // Darker green on hover
-              },
-            }}
-          >
-            <Typography
-              variant="body2"
+          <Box sx={{ mt: 1, width: "100%" }}>
+            <LinearProgress
+              variant="determinate"
+              value={categorizeSurvey(survey) === "Completed" ? 100 : 0}
               sx={{
-                color: "white", // White text
-                fontSize: "12px",
-                fontWeight: "bold",
+                height: 6,
+                borderRadius: 3,
+                backgroundColor: "#E0E0E0",
+                "& .MuiLinearProgress-bar": { backgroundColor: "#1FC16B" },
               }}
-            >
-              VIEW
+            />
+          </Box>
+
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", mt: 1 }}>
+            <Typography variant="body2" sx={{ color: "#27104E", fontSize: "12px" }}>
+              {highlightText("Progress", searchQuery)}
+            </Typography>
+            <Typography variant="body2" sx={{ color: "#27104E", fontSize: "12px" }}>
+              {highlightText(categorizeSurvey(survey) === "Completed" ? "100%" : "0%", searchQuery)}
             </Typography>
           </Box>
-        </Card>
-      </Grid>
-    ))}
-  </Grid>
-)}
+
+          {(categorizeSurvey(survey) === "Completed" || categorizeSurvey(survey) === "Scheduled") && <br />}
+
+          {categorizeSurvey(survey) === "Live" && (
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", mt: 1 }}>
+              <Box sx={{ display: "flex", alignItems: "center" }}>
+                <AvatarGroup max={4} sx={{ '& .MuiAvatar-root': { width: 20, height: 20, fontSize: 12 } }}>
+                  <Avatar alt="User 1" src={user1} />
+                  <Avatar alt="User 2" src={user2} />
+                  <Avatar alt="User 3" src={user3} />
+                  <Avatar alt="User 4" src={PLUSICON} />
+                </AvatarGroup>
+                <Typography variant="body2" sx={{ color: "#E26001", fontWeight: "bold", ml: 1, fontSize: "12px" }}>
+                  {highlightText("+ responses", searchQuery)}
+                </Typography>
+              </Box>
+            </Box>
+          )}
+        </CardContent>
+
+        <Box
+          sx={{
+            position: "absolute",
+            bottom: 10,
+            right: 10,
+            border: "1px solid",
+            borderColor: categorizeSurvey(survey) === "Live" ? "#E26001" : categorizeSurvey(survey) === "Completed" ? "#1FC16B" : "#C13B06",
+            borderRadius: "16px",
+            padding: "2px 8px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: "transparent",
+            minWidth: "auto",
+          }}
+        >
+          <Typography
+            variant="body2"
+            sx={{
+              color: "#5A5A5A",
+              fontSize: "12px",
+              fontWeight: "bold",
+            }}
+          >
+            {highlightText(categorizeSurvey(survey) === "Live" ? "In Live" : categorizeSurvey(survey), searchQuery)}
+          </Typography>
+        </Box>
+      </Card>
+    </Grid>
+  );
+})}
+
+            </Grid>
+          )}
 
           {selectedOption === "Group surveys" && <Typography>Group surveys will be displayed here.</Typography>}
         </Box>
@@ -897,7 +801,7 @@ const DashboardCreated = () => {
                   marginLeft: "10px",
                 }}
               >
-                Group creation
+                {highlightText("Group creation", searchQuery)}
               </Typography>
 
               <Box
@@ -971,7 +875,7 @@ const DashboardCreated = () => {
               </Box>
 
               <Typography sx={{ mt: 10, textAlign: "center", color: "grey" }}>
-                You wanna create a new group! Add members to <br />contribute to your survey.
+                {highlightText("You wanna create a new group! Add members to <br />contribute to your survey.", searchQuery)}
               </Typography>
 
               <Box sx={{ mt: 4, ml: 28 }}>
@@ -988,7 +892,7 @@ const DashboardCreated = () => {
                     height: "32px",
                   }}
                 >
-                  Set Conditions
+                  {highlightText("Set Conditions", searchQuery)}
                 </Button>
               </Box>
             </>
@@ -1004,7 +908,7 @@ const DashboardCreated = () => {
                   marginLeft: "10px",
                 }}
               >
-                Set Conditions
+                {highlightText("Set Conditions", searchQuery)}
               </Typography>
 
               <Box
@@ -1035,7 +939,7 @@ const DashboardCreated = () => {
                     alt="Skill"
                     style={{ width: "30px", height: "30px", borderRadius: "50%" }}
                   />
-                  <Typography>Skill</Typography>
+                  <Typography>{highlightText("Skill", searchQuery)}</Typography>
                 </Box>
 
                 <Box
@@ -1058,7 +962,7 @@ const DashboardCreated = () => {
                     alt="RP"
                     style={{ width: "40px", height: "28px", borderRadius: "50%" }}
                   />
-                  <Typography>RP</Typography>
+                  <Typography>{highlightText("RP", searchQuery)}</Typography>
                 </Box>
 
                 <Box
@@ -1081,7 +985,7 @@ const DashboardCreated = () => {
                     alt="Role"
                     style={{ width: "40px", height: "30px", borderRadius: "50%" }}
                   />
-                  <Typography>Role</Typography>
+                  <Typography>{highlightText("Role", searchQuery)}</Typography>
                 </Box>
               </Box>
 
@@ -1115,7 +1019,7 @@ const DashboardCreated = () => {
                         },
                       }}
                     >
-                      {skill}
+                      {highlightText(skill, searchQuery)}
                     </Button>
                   ))}
                 </Box>
@@ -1152,253 +1056,251 @@ const DashboardCreated = () => {
                         },
                       }}
                     >
-                      {level}
+                      {highlightText(level, searchQuery)}
                     </Button>
                   ))}
                 </Box>
               )}
 
               {showRPInput && (
-                <Box
-                  sx={{
-                    mt: 2,
-                    ml: "10px",
-                    display: "flex",
-                    gap: 2,
-                  }}
-                >
-                  <TextField
-                    label="Start Range"
-                    variant="outlined"
-                    value={startRange}
-                    onChange={(e) => setStartRange(e.target.value)}
-                    sx={{ width: "150px" }}
-                  />
-                  <TextField
-                    label="End Range"
-                    variant="outlined"
-                    value={endRange}
-                    onChange={(e) => setEndRange(e.target.value)}
-                    sx={{ width: "150px" }}
-                  />
-                </Box>
-              )}
-
-              {showRoleDropdown && (
-                <Box
-                  sx={{
-                    mt: 2,
-                    ml: "10px",
-                  }}
-                >
-                  <FormControl fullWidth>
-                    <InputLabel id="role-select-label">Role</InputLabel>
-                    <Select
-                      labelId="role-select-label"
-                      id="role-select"
-                      value={selectedRole}
-                      label="Role"
-                      onChange={handleRoleChange}
-                      sx={{ width: "200px" }}
-                    >
-                      <MenuItem value="Faculty">Faculty</MenuItem>
-                      <MenuItem value="Student">Student</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Box>
-              )}
-
-              {selectedLevels.length > 0 && showSkills && (
-                <Box
-                  sx={{
-                    mt: 2,
-                    ml: "10px",
-                    border: "1px solid #ddd",
-                    borderRadius: "4px",
-                    padding: "16px",
-                  }}
-                >
-                  <Box
-                    sx={{
-                      display: "flex",
-                      flexWrap: "wrap",
-                      gap: 1,
-                    }}
-                  >
-                    {selectedLevels.map((level, index) => (
-                      <Button
-                        key={index}
-                        variant="contained"
-                        sx={{
-                          textTransform: "none",
-                          backgroundColor: "rgb(226, 222, 248)",
-                          color: "black",
-                          borderRadius: "20px",
-                          border: "2px solid #6A50E0",
-                          padding: "2px 8px",
-                          fontSize: "0.7rem",
-                          height: "24px",
-                          "&:hover": {
-                            backgroundColor: "#6A50E0",
-                            borderColor: "#6A50E0",
-                          },
-                        }}
-                      >
-                        {level}
-                      </Button>
-                    ))}
-                  </Box>
-                  <Button
-                    onClick={handleDeselectAll}
-                    sx={{
-                      mt: 2,
-                      textTransform: "none",
-                      color: "red",
-                      fontSize: "0.7rem",
-                      "&:hover": {
-                        backgroundColor: "transparent",
-                      },
-                    }}
-                  >
-                    Deselect All
-                  </Button>
-                </Box>
-              )}
-
-              <Box sx={{ mt: 2, ml: 52 }}>
-                <Button
-                  variant="contained"
-                  onClick={handleSeeResults}
-                  sx={{
-                    fontWeight: "bold",
-                    backgroundColor: "#7B61FF",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    padding: "4px 12px",
-                    fontSize: "0.75rem",
-                    height: "32px",
-                  }}
-                >
-                  See Results
-                </Button>
-              </Box>
-            </>
-          )}
-        </Box>
-      </Modal>
-
-      {/* Results Modal */}
-      
-<Modal
-  open={openResultsModal}
-  onClose={handleCloseResultsModal}
-  aria-labelledby="results-modal"
-  aria-describedby="results-modal-description"
-  sx={{
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  }}
->
   <Box
     sx={{
-      backgroundColor: "#fff",
-      padding: "40px",
-      borderRadius: "8px",
-      width: "80%",
-      maxWidth: "1200px",
-      height: "80%",
-      overflowY: "auto",
-      textAlign: "left",
-      position: "relative",
+      mt: 2,
+      ml: "10px",
+      display: "flex",
+      gap: 2,
     }}
   >
-    {/* Close Button */}
-    <IconButton
-      onClick={handleCloseResultsModal}
-      sx={{ position: "absolute", top: "10px", right: "10px", color: "red" }}
+    <TextField
+      label="Start Range"
+      variant="outlined"
+      value={startRange}
+      onChange={(e) => setStartRange(e.target.value)}
+      sx={{ width: "150px" }}
+    />
+    <TextField
+      label="End Range"
+      variant="outlined"
+      value={endRange}
+      onChange={(e) => setEndRange(e.target.value)}
+      sx={{ width: "150px" }}
+    />
+  </Box>
+)}
+
+{showRoleDropdown && (
+  <Box
+    sx={{
+      mt: 2,
+      ml: "10px",
+    }}
+  >
+    <FormControl fullWidth>
+      <InputLabel id="role-select-label">Role</InputLabel>
+      <Select
+        labelId="role-select-label"
+        id="role-select"
+        value={selectedRole}
+        label="Role"
+        onChange={handleRoleChange}
+        sx={{ width: "200px" }}
+      >
+        <MenuItem value="Faculty">Faculty</MenuItem>
+        <MenuItem value="Student">Student</MenuItem>
+      </Select>
+    </FormControl>
+  </Box>
+)}
+
+{selectedLevels.length > 0 && showSkills && (
+  <Box
+    sx={{
+      mt: 2,
+      ml: "10px",
+      border: "1px solid #ddd",
+      borderRadius: "4px",
+      padding: "16px",
+    }}
+  >
+    <Box
+      sx={{
+        display: "flex",
+        flexWrap: "wrap",
+        gap: 1,
+      }}
     >
-      <CloseIcon />
-    </IconButton>
-
-    {/* Title */}
-    <Typography variant="h6" component="h2" sx={{ fontWeight: "bold", mb: 2 }}>
-      Student Results
-    </Typography>
-
-    {/* Dropdown Filters and Group Name Field */}
-    <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
-      {/* Year Dropdown */}
-      <FormControl sx={{ minWidth: 120 }}>
-        <InputLabel>Year</InputLabel>
-        <Select value={selectedYear} onChange={(e) => setSelectedYear(e.target.value)}>
-          <MenuItem value="All">All</MenuItem>
-          <MenuItem value="I">I</MenuItem>
-          <MenuItem value="II">II</MenuItem>
-          <MenuItem value="III">III</MenuItem>
-          <MenuItem value="IV">IV</MenuItem>
-        </Select>
-      </FormControl>
-
-      {/* Department Dropdown */}
-      <FormControl sx={{ minWidth: 150 }}>
-        <InputLabel>Department</InputLabel>
-        <Select value={selectedDepartment} onChange={(e) => setSelectedDepartment(e.target.value)}>
-          <MenuItem value="All">All</MenuItem>
-          <MenuItem value="CSE">CSE</MenuItem>
-          <MenuItem value="ECE">ECE</MenuItem>
-          <MenuItem value="MECH">MECH</MenuItem>
-          <MenuItem value="CIVIL">CIVIL</MenuItem>
-        </Select>
-      </FormControl>
-
-      {/* Editable Group Name Field */}
-      <TextField
-        label="Group Name"
-        value={groupName}
-        onChange={(e) => setGroupName(e.target.value)}
-        variant="outlined"
-        sx={{ flexGrow: 1 }} // This ensures the TextField takes up remaining space
-      />
+      {selectedLevels.map((level, index) => (
+        <Button
+          key={index}
+          variant="contained"
+          sx={{
+            textTransform: "none",
+            backgroundColor: "rgb(226, 222, 248)",
+            color: "black",
+            borderRadius: "20px",
+            border: "2px solid #6A50E0",
+            padding: "2px 8px",
+            fontSize: "0.7rem",
+            height: "24px",
+            "&:hover": {
+              backgroundColor: "#6A50E0",
+              borderColor: "#6A50E0",
+            },
+          }}
+        >
+          {level}
+        </Button>
+      ))}
     </Box>
-
-    {/* Student Table */}
-    <TableContainer component={Paper}>
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell>Name</TableCell>
-            <TableCell>Year</TableCell>
-            <TableCell>Email</TableCell>
-            <TableCell>Department</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {filteredStudents.map((student, index) => (
-            <TableRow key={index}>
-              <TableCell sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Avatar sx={{ bgcolor: "#1976d2", color: "white" }}>
-                  {student.Name.charAt(0).toUpperCase()}
-                </Avatar>
-                {student.Name}
-              </TableCell>
-              <TableCell>{student.Year}</TableCell>
-              <TableCell>{student.Email}</TableCell>
-              <TableCell>{student.Department}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
-
-    {/* "Create Groups" Button */}
-    <Button variant="contained" color="primary" onClick={handleCreateGroup} sx={{ marginTop: 2 }}>
-      Create Groups
+    <Button
+      onClick={handleDeselectAll}
+      sx={{
+        mt: 2,
+        textTransform: "none",
+        color: "red",
+        fontSize: "0.7rem",
+        "&:hover": {
+          backgroundColor: "transparent",
+        },
+      }}
+    >
+      Deselect All
     </Button>
   </Box>
+)}
+
+<Box sx={{ mt: 2, ml: 52 }}>
+  <Button
+    variant="contained"
+    onClick={handleSeeResults}
+    sx={{
+      fontWeight: "bold",
+      backgroundColor: "#7B61FF",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: "4px 12px",
+      fontSize: "0.75rem",
+      height: "32px",
+    }}
+  >
+    See Results
+  </Button>
+</Box>
+</>
+)}
+</Box>
 </Modal>
 
-    </Box>
-  );
+{/* Results Modal */}
+<Modal
+open={openResultsModal}
+onClose={handleCloseResultsModal}
+aria-labelledby="results-modal"
+aria-describedby="results-modal-description"
+sx={{
+display: "flex",
+alignItems: "center",
+justifyContent: "center",
+}}
+>
+<Box
+sx={{
+backgroundColor: "#fff",
+padding: "40px",
+borderRadius: "8px",
+width: "80%",
+maxWidth: "1200px",
+height: "80%",
+overflowY: "auto",
+textAlign: "left",
+position: "relative",
+}}
+>
+{/* Close Button */}
+<IconButton
+onClick={handleCloseResultsModal}
+sx={{ position: "absolute", top: "10px", right: "10px", color: "red" }}
+>
+<CloseIcon />
+</IconButton>
+
+{/* Title */}
+<Typography variant="h6" component="h2" sx={{ fontWeight: "bold", mb: 2 }}>
+Student Results
+</Typography>
+
+{/* Dropdown Filters and Group Name Field */}
+<Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+{/* Year Dropdown */}
+<FormControl sx={{ minWidth: 120 }}>
+<InputLabel>Year</InputLabel>
+<Select value={selectedYear} onChange={(e) => setSelectedYear(e.target.value)}>
+  <MenuItem value="All">All</MenuItem>
+  <MenuItem value="I">I</MenuItem>
+  <MenuItem value="II">II</MenuItem>
+  <MenuItem value="III">III</MenuItem>
+  <MenuItem value="IV">IV</MenuItem>
+</Select>
+</FormControl>
+
+{/* Department Dropdown */}
+<FormControl sx={{ minWidth: 150 }}>
+<InputLabel>Department</InputLabel>
+<Select value={selectedDepartment} onChange={(e) => setSelectedDepartment(e.target.value)}>
+  <MenuItem value="All">All</MenuItem>
+  <MenuItem value="CSE">CSE</MenuItem>
+  <MenuItem value="ECE">ECE</MenuItem>
+  <MenuItem value="MECH">MECH</MenuItem>
+  <MenuItem value="CIVIL">CIVIL</MenuItem>
+</Select>
+</FormControl>
+
+{/* Editable Group Name Field */}
+<TextField
+label="Group Name"
+value={groupName}
+onChange={(e) => setGroupName(e.target.value)}
+variant="outlined"
+sx={{ flexGrow: 1 }} // This ensures the TextField takes up remaining space
+/>
+</Box>
+
+{/* Student Table */}
+<TableContainer component={Paper}>
+<Table>
+<TableHead>
+  <TableRow>
+    <TableCell>Name</TableCell>
+    <TableCell>Year</TableCell>
+    <TableCell>Email</TableCell>
+    <TableCell>Department</TableCell>
+  </TableRow>
+</TableHead>
+<TableBody>
+  {filteredStudents.map((student, index) => (
+    <TableRow key={index}>
+      <TableCell sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <Avatar sx={{ bgcolor: "#1976d2", color: "white" }}>
+          {student.Name.charAt(0).toUpperCase()}
+        </Avatar>
+        {student.Name}
+      </TableCell>
+      <TableCell>{student.Year}</TableCell>
+      <TableCell>{student.Email}</TableCell>
+      <TableCell>{student.Department}</TableCell>
+    </TableRow>
+  ))}
+</TableBody>
+</Table>
+</TableContainer>
+
+{/* "Create Groups" Button */}
+<Button variant="contained" color="primary" onClick={handleCreateGroup} sx={{ marginTop: 2 }}>
+Create Groups
+</Button>
+</Box>
+</Modal>
+</Box>
+);
 };
 export default DashboardCreated;
