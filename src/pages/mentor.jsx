@@ -1,210 +1,228 @@
-import React, { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
-  Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText,
-  AppBar, Toolbar, Typography, Box, CssBaseline, IconButton, InputBase,
-  Avatar, Button, useMediaQuery, useTheme, Dialog
+  Grid, Card, CardContent, Typography, Box, LinearProgress, AvatarGroup,
+  Avatar
 } from "@mui/material";
-import MenuIcon from "@mui/icons-material/Menu";
-import DashboardIcon from "@mui/icons-material/Dashboard";
-import DescriptionIcon from "@mui/icons-material/Description";
-import GroupIcon from "@mui/icons-material/Group";
-import ExitToAppIcon from "@mui/icons-material/ExitToApp";
-import SearchIcon from "@mui/icons-material/Search";
-import SettingsIcon from "@mui/icons-material/Settings";
-import NotificationsIcon from "@mui/icons-material/Notifications";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import Bag from "../assets/baaag.png";
+import user1 from "../assets/a.png";
+import user2 from "../assets/m.png";
+import user3 from "../assets/d.png";
+import PLUSICON from "../assets/PLUS.png";
 
-const desktopDrawerWidth = 220;
-const primaryColor200 = "#7B3DFF";
-
-const Mentor = () => {
+const MentorDashboard = () => {
+  const [surveys, setSurveys] = useState([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const location = useLocation();
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [open, setOpen] = useState(false);
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  const [selectedOption, setSelectedOption] = useState("Live"); // State for selected survey option
 
-  const menuItems = [
-    { text: "Dashboard", icon: <DashboardIcon />, path: "/dashboard" },
-    { text: "My surveys", icon: <DescriptionIcon />, path: "/survey" },
-    { text: "Mentoring", icon: <GroupIcon />, path: "/mentor" },
-  ];
+  useEffect(() => {
+    fetchMenteeSurveys();
+  }, []);
 
-  const handleDrawerToggle = () => {
-    setMobileOpen(!mobileOpen);
+  const fetchMenteeSurveys = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("token");
+      
+      const response = await fetch("http://localhost:3000/get-mentee-surveys", {
+        method: "GET",
+        headers: {
+          Authorization: token,
+          "Content-Type": "application/json"
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setSurveys(data);
+      console.log("Fetched surveys:", data);
+    } catch (error) {
+      console.error("Error fetching mentee surveys:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleLogout = () => {
-    navigate("/");
+  const handleSurveyClick = (surveyId) => {
+    navigate(`/survey-responses/${surveyId}`);
   };
 
-  const handleOptionClick = (option) => {
-    setSelectedOption(option);
-  };
-
-  const drawer = (
-    <Box sx={{ height: "100vh", background: "#fff", color: "#000", p: 2 }}>
-      <Typography
-        variant="h6"
-        sx={{ fontWeight: "bold", color: primaryColor200, mb: 2, fontFamily: "Poppins, sans-serif" }}
-      >
-        BIT SURVEY
-      </Typography>
-      <List>
-        {menuItems.map((item, index) => {
-          const isActive = location.pathname === item.path;
-          return (
-            <ListItem key={index} disablePadding>
-              <ListItemButton
-                onClick={() => navigate(item.path)}
-                sx={{
-                  borderLeft: isActive ? `8px solid ${primaryColor200}` : "none",
-                  ml: isActive ? "-14px" : "0",
-                  borderRadius: "10px",
-                }}
-              >
-                <ListItemIcon sx={{ color: "black" }}>{item.icon}</ListItemIcon>
-                <ListItemText primary={item.text} sx={{ color: "black" }} />
-              </ListItemButton>
-            </ListItem>
-          );
-        })}
-      </List>
-      <Box sx={{ position: "absolute", bottom: 20, left: 16 }}>
-        <ListItem disablePadding>
-          <ListItemButton onClick={handleLogout}>
-            <ListItemIcon sx={{ color: "grey" }}>
-              <ExitToAppIcon />
-            </ListItemIcon>
-            <ListItemText primary="Log out" />
-          </ListItemButton>
-        </ListItem>
+  if (loading) {
+    return (
+      <Box sx={{ p: 3, textAlign: 'center' }}>
+        <Typography variant="h6">Loading surveys...</Typography>
       </Box>
-    </Box>
-  );
+    );
+  }
 
   return (
-    <Box sx={{ display: "flex", height: "100vh", width: "100vw", backgroundColor: "#fff" }}>
-      <CssBaseline />
-      <AppBar
-        position="fixed"
-        sx={{
-          background: "#fff",
-          color: "#000",
-          width: { sm: `calc(100% - ${desktopDrawerWidth}px)` },
-          ml: { sm: `${desktopDrawerWidth}px` },
-          boxShadow: "none",
-          borderBottom: "1px solid #ddd",
-        }}
-      >
-        <Toolbar sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          {/* Left Side: Drawer Toggle & Title */}
-          <Box sx={{ display: "flex", alignItems: "center" }}>
-            <IconButton color="inherit" edge="start" onClick={handleDrawerToggle} sx={{ mr: 1, display: { sm: "none" } }}>
-              <MenuIcon />
-            </IconButton>
-            <Typography variant="h6" sx={{ fontWeight: "bold", color: "black", fontSize: { xs: "16px", sm: "27px" } }}>
-              Dashboard
-            </Typography>
-          </Box>
+    <Box sx={{ 
+      p: 3,
+      display: 'flex',
+      flexDirection: 'column',
+      minHeight: '100vh',
+    }}>
+      {/* Header Section */}
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="h4" sx={{ 
+          fontWeight: "bold", 
+          textAlign: "left",
+        }}>
+          Mentee Surveys
+        </Typography>
+      </Box>
 
-          {/* Center: Search Bar */}
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              backgroundColor: "#f1f1f1",
-              borderRadius: "20px",
-              padding: "4px 10px",
-              width: { xs: "140px", sm: "250px" },
-              boxShadow: "none",
-              ml: "auto",
-            }}
-          >
-            <SearchIcon sx={{ color: "gray", mr: 1 }} />
-            <InputBase
-              placeholder="Search..."
-              sx={{ flex: 1, fontSize: "14px" }}
-            />
-          </Box>
+      {/* Surveys Grid */}
+      <Box sx={{ flexGrow: 1 }}>
+        {surveys.length === 0 ? (
+          <Typography variant="body1" sx={{ textAlign: "center", mt: 4 }}>
+            No live surveys available for your mentees at this time.
+          </Typography>
+        ) : (
+          <Grid container spacing={3}>
+            {surveys.map((survey) => {
+              const startDate = new Date(survey.start_date).toLocaleDateString('en-CA');
+              const creatorName = survey.staff_email.split('@')[0].split('.')[0].toUpperCase();
+              
+              return (
+                <Grid item xs={12} sm={6} md={4} key={survey.id}>
+                  <Card
+                    onClick={() => handleSurveyClick(survey.id)}
+                    sx={{
+                      backgroundColor: "#F5F8FE",
+                      cursor: "pointer",
+                      "&:hover": { boxShadow: 3 },
+                      borderRadius: "10px",
+                      height: "100%",
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <CardContent>
+                      {/* Date - Top Left */}
+                      <Typography variant="body2" sx={{ color: "#4A4A4A", mb: 1 }}>
+                        {startDate}
+                      </Typography>
 
-          {/* Right Side: Notifications & Settings Icons */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 0.8, sm: 2 } }}>
-            <IconButton sx={{ backgroundColor: "#F5F6FA", p: 1 }}>
-              <SettingsIcon sx={{ color: "#7A7A7A", fontSize: { xs: "10px", sm: "24px" } }} />
-            </IconButton>
+                      {/* Survey Title and Creator */}
+                      <Box sx={{ mb: 2 }}>
+                        <Typography variant="h6" sx={{ 
+                          fontWeight: 600, 
+                          color: "#000",
+                          fontSize: "1.1rem",
+                          mb: 0.5
+                        }}>
+                          {survey.survey_title || "Untitled"}
+                        </Typography>
+                        <Typography variant="body1" sx={{ 
+                          color: "#4A4A4A",
+                          fontSize: "0.9rem"
+                        }}>
+                          {creatorName}
+                        </Typography>
+                      </Box>
 
-            <IconButton sx={{ backgroundColor: "#F5F6FA", p: 1 }}>
-              <NotificationsIcon sx={{ color: "#7A7A7A", fontSize: { xs: "10px", sm: "24px" } }} />
-            </IconButton>
+                      {/* Progress Bar - Now Visible */}
+                      <Box sx={{ mb: 2 }}>
+                        <Typography variant="body2" sx={{ 
+                          color: "#4A4A4A",
+                          fontSize: "0.8rem",
+                          mb: 0.5
+                        }}>
+                          Progress
+                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <LinearProgress
+                            variant="determinate"
+                            value={0}
+                            sx={{
+                              flexGrow: 1,
+                              height: 8,
+                              borderRadius: 4,
+                              backgroundColor: "#E0E0E0",
+                              "& .MuiLinearProgress-bar": { 
+                                backgroundColor: "#1FC16B",
+                                borderRadius: 4
+                              },
+                            }}
+                          />
+                          <Typography variant="body2" sx={{ 
+                            color: "#4A4A4A",
+                            fontSize: "0.8rem",
+                            ml: 1
+                          }}>
+                            0%
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </CardContent>
 
-            <Avatar src="/assets/prof.png" sx={{ width: { xs: 30, sm: 40 }, height: { xs: 30, sm: 40 } }} />
-          </Box>
-        </Toolbar>
-      </AppBar>
-
-      {/* Drawer Component */}
-      <Drawer
-        variant={isMobile ? "temporary" : "permanent"} // Use temporary variant on mobile
-        open={isMobile ? mobileOpen : true} // Use mobileOpen state for mobile view
-        onClose={handleDrawerToggle} // Handle closing the drawer on mobile
-        sx={{
-          width: desktopDrawerWidth,
-          flexShrink: 0,
-          display: { xs: "none", sm: "block" },
-          "& .MuiDrawer-paper": { width: desktopDrawerWidth, boxSizing: "border-box" },
-          ...(isMobile && { display: "block" }), // Ensure drawer is displayed on mobile
-        }}
-      >
-        {drawer}
-      </Drawer>
-
-      {/* Main Content */}
-      <Box sx={{ flexGrow: 1, p: 3, mt: 8 }}>
-        <Box sx={{ display: "flex", gap: 4, mt: 3 }}>
-          {["Live", "Completed"].map((option) => (
-            <Button
-              key={option}
-              onClick={() => handleOptionClick(option)}
-              disableRipple
-              sx={{
-                textTransform: "none",
-                color: selectedOption === option ? primaryColor200 : "text.secondary",
-                borderBottom: selectedOption === option ? `2px solid ${primaryColor200}` : "none",
-                borderRadius: 0,
-                padding: 0,
-                minWidth: "auto",
-                backgroundColor: "transparent",
-                "&:hover": {
-                  backgroundColor: "transparent",
-                },
-                "&:active": {
-                  backgroundColor: "transparent",
-                },
-                "&:focus": {
-                  outline: "none",
-                },
-                "&:focus-visible": {
-                  outline: "none",
-                },
-              }}
-            >
-              {option}
-            </Button>
-          ))}
-        </Box>
-
-        <Box sx={{ mt: 2 }}>
-          {selectedOption === "Live" && <Typography>Live surveys will be displayed here.</Typography>}
-          {selectedOption === "Completed" && <Typography>Completed surveys will be displayed here.</Typography>}
-        </Box>
+                    {/* Responses and Status */}
+                    <Box sx={{ 
+                      display: 'flex', 
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      p: 2,
+                      pt: 0
+                    }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <AvatarGroup max={4} sx={{ 
+                          '& .MuiAvatar-root': { 
+                            width: 24, 
+                            height: 24, 
+                            fontSize: 12 
+                          } 
+                        }}>
+                          <Avatar alt="User 1" src={user1} />
+                          <Avatar alt="User 2" src={user2} />
+                          <Avatar alt="User 3" src={user3} />
+                          <Avatar alt="More users" src={PLUSICON} />
+                        </AvatarGroup>
+                        <Typography variant="body2" sx={{ 
+                          color: "#E26001",
+                          fontWeight: "bold",
+                          ml: 1,
+                          fontSize: "0.8rem"
+                        }}>
+                          + responses
+                        </Typography>
+                      </Box>
+                      
+                      <Box
+                        sx={{
+                          border: "1px solid #E26001",
+                          borderRadius: "16px",
+                          padding: "2px 8px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          backgroundColor: "transparent",
+                        }}
+                      >
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            color: "#5A5A5A",
+                            fontSize: "0.75rem",
+                            fontWeight: "bold",
+                          }}
+                        >
+                          In Live
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Card>
+                </Grid>
+              );
+            })}
+          </Grid>
+        )}
       </Box>
     </Box>
   );
 };
 
-export default Mentor;
+export default MentorDashboard;

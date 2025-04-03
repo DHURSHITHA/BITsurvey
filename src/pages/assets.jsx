@@ -34,7 +34,6 @@ const AssetsDict = () => {
 
   const menuItems = [
     { text: "Dashboard", icon: <DashboardIcon />, path: "/dashboard" },
-    { text: "My surveys", icon: <DescriptionIcon />, path: "/surveys" },
     { text: "Mentoring", icon: <GroupIcon />, path: "/mentoring" },
   ];
 

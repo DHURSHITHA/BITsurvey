@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import {
   AppBar,
@@ -25,6 +24,7 @@ import {
   Paper,
   ListItemAvatar,
   Chip,
+  TextField,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import DashboardIcon from "@mui/icons-material/Dashboard";
@@ -32,7 +32,30 @@ import MenuIcon from "@mui/icons-material/Menu";
 import LogoutIcon from "@mui/icons-material/Logout";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import CloseIcon from "@mui/icons-material/Close";
+import SearchIcon from "@mui/icons-material/Search";
 import axios from "axios";
+
+// Highlight Component
+const Highlight = ({ text, searchQuery }) => {
+  if (!searchQuery) return <span>{text}</span>;
+
+  const regex = new RegExp(`(${searchQuery})`, "gi");
+  const parts = text.split(regex);
+
+  return (
+    <span>
+      {parts.map((part, index) =>
+        part.toLowerCase() === searchQuery.toLowerCase() ? (
+          <span key={index} style={{ backgroundColor: "yellow" }}>
+            {part}
+          </span>
+        ) : (
+          part
+        )
+      )}
+    </span>
+  );
+};
 
 const User = () => {
   const [tabIndex, setTabIndex] = useState(0);
@@ -40,7 +63,13 @@ const User = () => {
   const [userInitial, setUserInitial] = useState("");
   const [notifications, setNotifications] = useState([]);
   const [anchorEl, setAnchorEl] = useState(null);
+  const [completedSurveys, setCompletedSurveys] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  
   const navigate = useNavigate();
+  const isMobile = useMediaQuery("(max-width:600px)");
 
   useEffect(() => {
     if (tabIndex === 0) {
@@ -57,18 +86,45 @@ const User = () => {
         setUserInitial(userName.charAt(0).toUpperCase());
       }
     }
-  }, []);
+    if (isMobile) {
+      setSidebarOpen(false);
+    }
+  }, [isMobile]);
 
-  // Fetch live surveys and generate notifications
   const fetchLiveSurveys = async () => {
     try {
       const token = localStorage.getItem("token");
+      const user = JSON.parse(atob(token.split(".")[1]));
+      const studentEmail = user.email;
+  
       const response = await axios.get("http://localhost:3000/surveysuser", {
         headers: { Authorization: token },
       });
-
+  
       if (response.status === 200) {
-        setLiveSurveys(response.data);
+        const now = new Date();
+        const live = response.data.filter((survey) => new Date(survey.end_date) >= now);
+        const completed = response.data.filter((survey) => new Date(survey.end_date) < now);
+  
+        const surveysWithCounts = await Promise.all(
+          live.map(async (survey) => {
+            const countResponse = await axios.get("http://localhost:3000/submission-count", {
+              headers: { Authorization: token },
+              params: {
+                survey_title: survey.survey_title,
+                student_email: studentEmail
+              }
+            });
+            return {
+              ...survey,
+              submissionCount: countResponse.data.count,
+              responseLimit: survey.response_limit
+            };
+          })
+        );
+  
+        setLiveSurveys(surveysWithCounts);
+        setCompletedSurveys(completed);
         generateNotifications(response.data);
       }
     } catch (error) {
@@ -76,7 +132,6 @@ const User = () => {
     }
   };
 
-  // Generate notifications and load read status from localStorage
   const generateNotifications = (surveys) => {
     const storedReadStatus = JSON.parse(localStorage.getItem("notificationReadStatus")) || {};
     const newNotifications = surveys.map((survey) => {
@@ -84,39 +139,36 @@ const User = () => {
       const today = new Date();
       const daysLeft = Math.ceil((endDate - today) / (1000 * 60 * 60 * 24));
       const senderName = survey.staff_email.split(".")[0];
+      const isLive = today >= new Date(survey.start_date) && today <= endDate;
+
       return {
         id: survey.survey_id,
-        message: daysLeft > 0 ? `Survey "${survey.survey_title}" live for you to attend now` : `Today is the last day to attend "${survey.survey_title}"`,
+        message: isLive ? `Survey "${survey.survey_title}" is live for you to attend now` : `Today is the last day to attend "${survey.survey_title}"`,
         timestamp: new Date(),
-        read: storedReadStatus[survey.survey_id] || false, // Load read status from localStorage
+        read: storedReadStatus[survey.survey_id] || false,
         sender: senderName,
       };
     });
     setNotifications(newNotifications);
   };
 
-  // Handle logout
   const handleLogout = () => {
     localStorage.removeItem("token");
     navigate("/login");
   };
 
-  // Handle notification click to open the popover
   const handleNotificationClick = (event) => {
     setAnchorEl(event.currentTarget);
   };
 
-  // Close the notification popover
   const handleCloseNotifications = () => {
     setAnchorEl(null);
   };
 
-  // Mark all notifications as read and save the status in localStorage
   const markAllAsRead = () => {
     const updatedNotifications = notifications.map((n) => ({ ...n, read: true }));
     setNotifications(updatedNotifications);
 
-    // Save read status in localStorage
     const readStatus = {};
     updatedNotifications.forEach((n) => (readStatus[n.id] = true));
     localStorage.setItem("notificationReadStatus", JSON.stringify(readStatus));
@@ -125,29 +177,23 @@ const User = () => {
   const open = Boolean(anchorEl);
   const id = open ? "notification-popover" : undefined;
 
-  // Sidebar component
   const Sidebar = () => {
-    const [open, setOpen] = useState(true);
-    const isMobile = useMediaQuery("(max-width:320px)");
-
-    useEffect(() => {
-      if (isMobile) {
-        setOpen(false);
-      }
-    }, [isMobile]);
-
     return (
       <Drawer
         variant="permanent"
         sx={{
-          width: open ? 240 : 60,
+          width: sidebarOpen ? 240 : 60,
           flexShrink: 0,
-          "& .MuiDrawer-paper": { width: open ? 240 : 60, transition: "0.3s ease-in-out" },
+          "& .MuiDrawer-paper": { 
+            width: sidebarOpen ? 240 : 60, 
+            transition: "0.3s ease-in-out",
+            boxSizing: "border-box"
+          },
         }}
       >
-        <Box sx={{ display: "flex", justifyContent: open ? "space-between" : "center", p: 2 }}>
-          {open && <Typography sx={{ color: "#6A5ACD", fontWeight: "bold", fontSize: "1.2rem" }}>BIT SURVEY</Typography>}
-          <IconButton onClick={() => setOpen(!open)}>
+        <Box sx={{ display: "flex", justifyContent: sidebarOpen ? "space-between" : "center", p: 2 }}>
+          {sidebarOpen && <Typography sx={{ color: "#6A5ACD", fontWeight: "bold", fontSize: "1.2rem" }}>BIT SURVEY</Typography>}
+          <IconButton onClick={() => setSidebarOpen(!sidebarOpen)}>
             <MenuIcon />
           </IconButton>
         </Box>
@@ -157,7 +203,7 @@ const User = () => {
             <ListItemIcon>
               <DashboardIcon />
             </ListItemIcon>
-            {open && <ListItemText primary="Dashboard" />}
+            {sidebarOpen && <ListItemText primary="Dashboard" />}
           </ListItem>
         </List>
         <Box sx={{ position: "absolute", bottom: 0, width: "100%" }}>
@@ -167,15 +213,13 @@ const User = () => {
               <ListItemIcon>
                 <LogoutIcon />
               </ListItemIcon>
-              {open && <ListItemText primary="Log out" />}
+              {sidebarOpen && <ListItemText primary="Log out" />}
             </ListItem>
           </List>
         </Box>
       </Drawer>
     );
   };
-
-  const isMobile = useMediaQuery("(max-width:320px)");
 
   return (
     <Box sx={{ display: "flex", height: "100vh" }}>
@@ -187,34 +231,86 @@ const User = () => {
           elevation={0}
           sx={{
             bgcolor: "white",
-            width: `calc(100% - ${open ? 240 : 60}px)`,
-            ml: open ? `${240}px` : `${60}px`,
+            width: `calc(100% - ${sidebarOpen ? 240 : 60}px)`,
+            ml: sidebarOpen ? `${240}px` : `${60}px`,
             transition: "0.3s ease-in-out",
           }}
         >
-          <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
+          <Toolbar sx={{ 
+            display: "flex", 
+            justifyContent: "space-between",
+            flexDirection: isMobile && mobileSearchOpen ? "column" : "row",
+            alignItems: isMobile && mobileSearchOpen ? "flex-start" : "center",
+            py: isMobile && mobileSearchOpen ? 1 : 0,
+            gap: isMobile ? 1 : 2
+          }}>
             {!isMobile && (
               <Typography variant="h6" sx={{ fontWeight: "bold" }}>
                 Dashboard
               </Typography>
             )}
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <IconButton sx={{ color: "#6A5ACD" }} onClick={handleNotificationClick}>
-                <Badge badgeContent={notifications.filter((n) => !n.read).length} color="error">
-                  <NotificationsIcon />
-                </Badge>
-              </IconButton>
-              <Avatar
-                sx={{ cursor: "pointer", bgcolor: "#6A5ACD" }}
-                onClick={() => navigate("/user-details")}
-              >
-                {userInitial}
-              </Avatar>
+            
+            {isMobile && !mobileSearchOpen && (
+              <Typography variant="h6" sx={{ fontWeight: "bold", flexGrow: 1 }}>
+                Dashboard
+              </Typography>
+            )}
+
+            <Box sx={{ 
+              display: "flex", 
+              alignItems: "center", 
+              gap: 2,
+              width: isMobile && mobileSearchOpen ? "100%" : "auto",
+              mt: isMobile && mobileSearchOpen ? 1 : 0
+            }}>
+              {isMobile && !mobileSearchOpen ? (
+                <IconButton onClick={() => setMobileSearchOpen(true)}>
+                  <SearchIcon />
+                </IconButton>
+              ) : (
+                <TextField
+                  variant="outlined"
+                  placeholder="Search..."
+                  size="small"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  sx={{
+                    width: isMobile ? "100%" : 200,
+                    backgroundColor: "#F5F8FE",
+                    borderRadius: "20px",
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: "20px",
+                    },
+                  }}
+                  InputProps={{
+                    endAdornment: isMobile && (
+                      <IconButton onClick={() => setMobileSearchOpen(false)}>
+                        <CloseIcon fontSize="small" />
+                      </IconButton>
+                    )
+                  }}
+                />
+              )}
+
+              {(!isMobile || !mobileSearchOpen) && (
+                <>
+                  <IconButton sx={{ color: "#6A5ACD" }} onClick={handleNotificationClick}>
+                    <Badge badgeContent={notifications.filter((n) => !n.read).length} color="error">
+                      <NotificationsIcon />
+                    </Badge>
+                  </IconButton>
+                  <Avatar
+                    sx={{ cursor: "pointer", bgcolor: "#6A5ACD" }}
+                    onClick={() => navigate("/user-details")}
+                  >
+                    {userInitial}
+                  </Avatar>
+                </>
+              )}
             </Box>
           </Toolbar>
         </AppBar>
 
-        {/* Notification Popover */}
         <Popover
           id={id}
           open={open}
@@ -229,7 +325,7 @@ const User = () => {
             horizontal: "right",
           }}
         >
-          <Paper sx={{ width: 360, p: 2 }}>
+          <Paper sx={{ width: isMobile ? "90vw" : 360, p: 2 }}>
             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
               <Typography variant="h6">Inbox</Typography>
               <Chip label={`${notifications.filter((n) => !n.read).length} new`} color="primary" size="small" />
@@ -248,22 +344,21 @@ const User = () => {
                       <Avatar>{notification.sender.charAt(0)}</Avatar>
                     </ListItemAvatar>
                     <ListItemText
-                      primary={notification.message}
+                      primary={<Highlight text={notification.message} searchQuery={searchQuery} />}
                       secondary={`${Math.floor((new Date() - new Date(notification.timestamp)) / 3600000)} hours ago`}
                     />
                     {!notification.read && (
                       <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "primary.main", ml: 1 }} />
                     )}
                   </ListItem>
-                  <Divider /> {/* Add a divider after each message */}
+                  <Divider />
                 </React.Fragment>
               ))}
             </List>
           </Paper>
         </Popover>
 
-        {/* Main Content */}
-        <Box sx={{ mt: 8, p: 3 }}>
+        <Box sx={{ mt: 8, p: isMobile ? 1 : 3 }}>
           <Tabs
             value={tabIndex}
             onChange={(e, newValue) => setTabIndex(newValue)}
@@ -290,7 +385,6 @@ const User = () => {
             />
           </Tabs>
 
-          {/* Live Surveys */}
           {tabIndex === 0 && (
             <>
               <Typography variant="h6" sx={{ fontWeight: "bold", mb: 2 }}>
@@ -298,26 +392,38 @@ const User = () => {
               </Typography>
               <Grid container spacing={3}>
                 {liveSurveys.map((survey, index) => {
-                  const startDateISO = new Date(survey.start_date).toISOString().split("T")[0];
-                  const endDateISO = new Date(survey.end_date).toISOString().split("T")[0];
-                  const today = new Date().toISOString().split("T")[0];
-                  const startDate = new Date(startDateISO);
-                  const endDate = new Date(endDateISO);
-                  const currentDate = new Date(today);
+                  const startDate = new Date(survey.start_date);
+                  const endDate = new Date(survey.end_date);
+                  const currentDate = new Date();
                   const timeDifference = endDate - currentDate;
-                  const daysLeft = Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
+                  const daysLeft = Math.floor(timeDifference / (1000 * 60 * 60 * 24));
+                  const hoursLeft = Math.floor((timeDifference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                  const minutesLeft = Math.floor((timeDifference % (1000 * 60 * 60)) / (1000 * 60));
+
+                  const isLive = currentDate >= startDate && currentDate <= endDate;
+                  const statusColor = isLive ? "#B42318" : "#808080";
+                  const statusBgColor = isLive ? "#FEF3F2" : "#F0F0F0";
+                  const canResubmit = survey.submissionCount < survey.responseLimit;
+                  const isDisabled = survey.submissionCount >= survey.responseLimit;
 
                   return (
-                    <Grid item xs={12} sm={6} md={4} key={index}>
-                      <Card sx={{ bgcolor: "#F5F8FE", height: "100%", display: "flex", flexDirection: "column" }}>
+                    <Grid item xs={12} md={4} key={index}>
+                      <Card sx={{ 
+                        bgcolor: "#F5F8FE", 
+                        height: "100%", 
+                        display: "flex", 
+                        flexDirection: "column",
+                        position: "relative",
+                        minHeight: "250px"
+                      }}>
                         <CardContent sx={{ flexGrow: 1 }}>
                           <Typography
                             variant="subtitle1"
                             sx={{
                               fontWeight: "bold",
                               fontSize: "14px",
-                              color: "#B42318",
-                              backgroundColor: "#FEF3F2",
+                              color: statusColor,
+                              backgroundColor: statusBgColor,
                               borderRadius: "20px",
                               padding: "4px 12px",
                               display: "inline-block",
@@ -325,33 +431,53 @@ const User = () => {
                               mb: 1,
                             }}
                           >
-                            {daysLeft > 0 ? `Live: ${daysLeft} days left` : "Expired"}
+                            {isLive
+                              ? `Live: ${daysLeft}d ${hoursLeft}h ${minutesLeft}m left`
+                              : `Expired`}
                           </Typography>
                           <Typography variant="h6" sx={{ color: "#27104E", fontSize: "14px", fontWeight: "bold" }}>
-                            {survey.survey_title}
+                            <Highlight text={survey.survey_title} searchQuery={searchQuery} />
                           </Typography>
                           <Typography color="textSecondary" sx={{ mt: 1 }}>
-                            Start Date: {startDateISO}
+                            Start Date: {startDate.toLocaleString()}
                           </Typography>
                           <Typography color="textSecondary" sx={{ mt: 1 }}>
-                            End Date: {endDateISO}
+                            End Date: {endDate.toLocaleString()}
                           </Typography>
+                          <Typography color="textSecondary" sx={{ mt: 1 }}>
+                            Submissions: {survey.submissionCount}/{survey.responseLimit}
+                          </Typography>
+                        </CardContent>
+                        <Box sx={{
+                          position: "absolute",
+                          bottom: 16,
+                          right: 16
+                        }}>
                           <Button
                             variant="contained"
                             sx={{
-                              mt: 2,
-                              ml: 25,
-                              backgroundColor: "#1FC16B",
+                              backgroundColor: isDisabled ? "#808080" : "#1FC16B",
                               color: "white",
-                              "&:hover": { backgroundColor: "#1FC16B" },
+                              "&:hover": { backgroundColor: isDisabled ? "#808080" : "#1FC16B" },
                             }}
                             onClick={() => {
-                              console.log("Start Survey:", survey.survey_id);
+                              if (isDisabled) {
+                                alert('You have reached the maximum submission limit. To edit your response, please contact the survey creator.');
+                              } else {
+                                navigate(`/surveyquestions/${survey.survey_title}`, { 
+                                  state: { 
+                                    canResubmit,
+                                    submissionCount: survey.submissionCount 
+                                  } 
+                                });
+                              }
                             }}
+                            disabled={isDisabled}
                           >
-                            Start
+                            {survey.submissionCount === 0 ? 'Start' : 
+                             canResubmit ? 'Resubmit' : 'Already Submitted'}
                           </Button>
-                        </CardContent>
+                        </Box>
                       </Card>
                     </Grid>
                   );
@@ -360,13 +486,75 @@ const User = () => {
             </>
           )}
 
-          {/* Completed Surveys */}
           {tabIndex === 1 && (
             <>
               <Typography variant="h6" sx={{ fontWeight: "bold", mb: 2 }}>
                 Completed Surveys
               </Typography>
-              <Typography>No completed surveys to display.</Typography>
+              <Grid container spacing={3}>
+                {completedSurveys.map((survey, index) => (
+                  <Grid item xs={12} sm={6} md={4} key={index}>
+                    <Card
+                      sx={{
+                        bgcolor: "#F5F8FE",
+                        height: "100%",
+                        display: "flex",
+                        flexDirection: "column",
+                        position: "relative",
+                        minHeight: "250px"
+                      }}
+                    >
+                      <CardContent sx={{ flexGrow: 1 }}>
+                        <Typography
+                          variant="subtitle1"
+                          sx={{
+                            fontWeight: "bold",
+                            fontSize: "14px",
+                            color: "#808080",
+                            backgroundColor: "#F0F0F0",
+                            borderRadius: "20px",
+                            padding: "4px 12px",
+                            display: "inline-block",
+                            textAlign: "center",
+                            mb: 1,
+                            border: "2px solid #1FC16B",
+                          }}
+                        >
+                          Completed
+                        </Typography>
+                        <Typography variant="h6" sx={{ color: "#27104E", fontSize: "14px", fontWeight: "bold" }}>
+                          <Highlight text={survey.survey_title} searchQuery={searchQuery} />
+                        </Typography>
+                        <Typography color="textSecondary" sx={{ mt: 1 }}>
+                          Start Date: {new Date(survey.start_date).toLocaleString()}
+                        </Typography>
+                        <Typography color="textSecondary" sx={{ mt: 1 }}>
+                          End Date: {new Date(survey.end_date).toLocaleString()}
+                        </Typography>
+                      </CardContent>
+                      <Box sx={{
+                        position: "absolute",
+                        bottom: 16,
+                        right: 16
+                      }}>
+                        <Button
+                          variant="contained"
+                          sx={{
+                            backgroundColor: "#1FC16B",
+                            color: "white",
+                            "&:hover": { backgroundColor: "#1FC16B" },
+                          }}
+                          onClick={() => {
+                            console.log("View Survey:", survey.survey_id);
+                          }}
+                        >
+                          View
+                        </Button>
+                      </Box>
+                    </Card>
+                  </Grid>
+                ))}
+              </Grid>
             </>
           )}
         </Box>

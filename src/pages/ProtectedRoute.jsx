@@ -1,16 +1,29 @@
-import React from "react";
-import { Navigate, Outlet } from "react-router-dom";
+// import { useContext } from "react";
+// import { Navigate, Outlet } from "react-router-dom";
+// import { AuthContext } from "../context/AuthContext";
 
-const ProtectedRoute = () => {
-  const token = localStorage.getItem("token"); // Check if the token exists
+// const ProtectedRoute = () => {
+//   const { currentUser } = useContext(AuthContext);
 
-  // If the token is not present, redirect to the login page
-  if (!token) {
-    return <Navigate to="/login" replace />;
+//   if (currentUser === null) {
+//     return <Navigate to="/login" replace />; // Redirect to login if no user
+//   }
+
+//   return <Outlet />; // Render protected page if authenticated
+// };
+
+// export default ProtectedRoute;
+import { useContext } from "react";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { AuthContext } from "../context/authcontext";
+
+export default function ProtectedRoute() {
+  const { isAuthenticated, isNavigationValid } = useContext(AuthContext);
+  const location = useLocation();
+
+  if (!isAuthenticated || !isNavigationValid) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // If the token is present, allow access to the protected route
   return <Outlet />;
-};
-
-export default ProtectedRoute;
+}

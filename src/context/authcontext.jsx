@@ -1,28 +1,69 @@
-import React, { createContext, useState, useContext } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 
-// Create the AuthContext
-const AuthContext = createContext();
+export const AuthContext = createContext();
 
-// Create a custom hook to use the AuthContext
-export const useAuth = () => useContext(AuthContext);
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
+}
 
-// AuthProvider component to wrap around the app
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+export function AuthProvider({ children }) {
+  const [currentUser, setCurrentUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [navigationOrigin, setNavigationOrigin] = useState(null);
 
-  // Login function to set the user
+  useEffect(() => {
+    const user = localStorage.getItem("user");
+    const origin = sessionStorage.getItem("navOrigin");
+    
+    if (user) {
+      try {
+        setCurrentUser(JSON.parse(user));
+        setNavigationOrigin(origin === "internal" ? origin : null);
+      } catch (error) {
+        console.error("Failed to parse user data", error);
+        localStorage.removeItem("user");
+      }
+    }
+    setLoading(false);
+
+    const handleBeforeUnload = () => {
+      sessionStorage.setItem("navOrigin", "internal");
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, []);
+
   const login = (userData) => {
-    setUser(userData);
+    localStorage.setItem("user", JSON.stringify(userData));
+    sessionStorage.setItem("navOrigin", "internal");
+    setCurrentUser(userData);
+    setNavigationOrigin("internal");
   };
 
-  // Logout function to clear the user
   const logout = () => {
-    setUser(null);
+    localStorage.removeItem("user");
+    sessionStorage.removeItem("navOrigin");
+    setCurrentUser(null);
+    setNavigationOrigin(null);
+  };
+
+  const value = {
+    currentUser,
+    login,
+    logout,
+    isAuthenticated: !!currentUser,
+    isNavigationValid: navigationOrigin === "internal",
+    loading
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
-      {children}
+    <AuthContext.Provider value={value}>
+      {!loading && children}
     </AuthContext.Provider>
   );
-};
+}

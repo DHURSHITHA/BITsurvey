@@ -110,7 +110,6 @@ const DashboardCreated = () => {
 
   const menuItems = [
     { text: "Dashboard", icon: <DashboardIcon />, path: "/dashboard" },
-    { text: "My surveys", icon: <DescriptionIcon />, path: "/survey" },
     { text: "Mentoring", icon: <GroupIcon />, path: "/mentor" },
   ];
 
@@ -300,6 +299,43 @@ const DashboardCreated = () => {
     }
   };
 
+  // const fetchAllSurveys = async () => {
+  //   try {
+  //     const token = localStorage.getItem("token");
+  //     const [liveSurveys, completedSurveys, scheduledSurveys] = await Promise.all([
+  //       fetch("http://localhost:3000/get-surveys", {
+  //         method: "GET",
+  //         headers: {
+  //           Authorization: token,
+  //         },
+  //       }).then((res) => res.json()),
+  //       fetch("http://localhost:3000/get-completed-surveys", {
+  //         method: "GET",
+  //         headers: {
+  //           Authorization: token,
+  //         },
+  //       }).then((res) => res.json()),
+  //       fetch("http://localhost:3000/get-scheduled-surveys", {
+  //         method: "GET",
+  //         headers: {
+  //           Authorization: token,
+  //         },
+  //       }).then((res) => res.json()),
+  //     ]);
+
+  //     const allSurveys = [...liveSurveys, ...completedSurveys, ...scheduledSurveys];
+  //     const uniqueSurveys = allSurveys.reduce((acc, survey) => {
+  //       if (!acc.find((s) => s.survey_title === survey.survey_title)) {
+  //         acc.push(survey);
+  //       }
+  //       return acc;
+  //     }, []);
+
+  //     setSurveys(uniqueSurveys);
+  //   } catch (error) {
+  //     console.error("Error fetching all surveys:", error);
+  //   }
+  // };
   const fetchAllSurveys = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -323,21 +359,28 @@ const DashboardCreated = () => {
           },
         }).then((res) => res.json()),
       ]);
-
+  
+      // Combine all surveys and remove duplicates
       const allSurveys = [...liveSurveys, ...completedSurveys, ...scheduledSurveys];
-      const uniqueSurveys = allSurveys.reduce((acc, survey) => {
-        if (!acc.find((s) => s.survey_title === survey.survey_title)) {
-          acc.push(survey);
+      
+      // Create a map to ensure unique surveys by title and dates
+      const surveyMap = new Map();
+      
+      allSurveys.forEach(survey => {
+        const key = `${survey.survey_title}-${survey.start_date}-${survey.end_date}`;
+        if (!surveyMap.has(key)) {
+          surveyMap.set(key, survey);
         }
-        return acc;
-      }, []);
-
+      });
+  
+      // Convert map values back to array
+      const uniqueSurveys = Array.from(surveyMap.values());
+      
       setSurveys(uniqueSurveys);
     } catch (error) {
       console.error("Error fetching all surveys:", error);
     }
   };
-
   const handleCloseResultsModal = () => {
     setOpenResultsModal(false);
   };
@@ -612,7 +655,7 @@ const DashboardCreated = () => {
         </Grid>
 
         <Box sx={{ display: "flex", gap: 4, mt: 3 }}>
-          {["Live", "Scheduled","All surveys", "Completed", "Group surveys"].map((option) => (
+          {["Live", "Scheduled","All surveys", "Completed"].map((option) => (
             <Button
               key={option}
               onClick={() => handleOptionClick(option)}
