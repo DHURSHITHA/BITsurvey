@@ -1,6 +1,6 @@
-# 📊 BIT Survey – Survey Management System
+# BIT Survey – Survey Management System
 
-## 🚀 Project Overview
+## Project Overview
 
 **BIT Survey** is a full-stack web application designed to streamline survey creation, distribution, and analysis within a college environment. The platform supports **faculty, mentors, and students** with secure, role-based dashboards and real-time analytics.
 
@@ -8,13 +8,14 @@ This project was built as part of a hands-on learning journey to understand **pr
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 **Frontend**
 
 * React.js
 * Material UI (MUI)
 * Axios
+* React
 
 **Backend**
 
@@ -31,47 +32,47 @@ This project was built as part of a hands-on learning journey to understand **pr
 
 ---
 
-## 🎯 Key Features
+## Key Features
 
-* 🔐 **Secure Authentication & Authorization**
+* **Secure Authentication & Authorization**
 
   * JWT-based protected routes
   * Password encryption using Bcrypt
 
-* 🧑‍💼 **Role-Based Dashboards**
+*  **Role-Based Dashboards**
 
   * Separate dashboards for Faculty, Mentors, and Students
 
-* 📝 **Survey Management**
+*  **Survey Management**
 
   * Create, edit, and schedule surveys
   * Multiple question types (MCQ & Text)
   * Survey template management
   * Response validation
 
-* 👥 **Targeted Surveys**
+*  **Targeted Surveys**
 
   * Group-based survey assignment
 
-* 📈 **Analytics & Tracking**
+*  **Analytics & Tracking**
 
   * Real-time response tracking
   * Progress and participation analysis
 
-* 🗄️ **Reliable Data Storage**
+*  **Reliable Data Storage**
 
   * MySQL-backed persistent storage
 
 ---
 
-## ⏳ Project Details
+##  Project Details
 
 * **Duration:** 1.5 Months
 * **Domain:** Survey Management System (College Faculty & Students)
 
 ---
 
-## 📚 Lessons Learned
+##  Lessons Learned
 
 * Designing intuitive and responsive user interfaces
 * Building scalable backend APIs
@@ -81,14 +82,7 @@ This project was built as part of a hands-on learning journey to understand **pr
 
 ---
 
-## 🤝 Team
-
-* **Dhurshitha N**
-* **Suwetha V**
-
----
-
-## 🌱 Future Enhancements
+## Future Enhancements
 
 * Advanced analytics and visual reports
 * Email/notification integration
@@ -97,7 +91,7 @@ This project was built as part of a hands-on learning journey to understand **pr
 
 ---
 
-## 🏷️ Hashtags
+##  Hashtags
 
 ```
 #FullStackDevelopment
